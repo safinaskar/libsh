@@ -1,0 +1,1084 @@
+# For Kate 3.8.4: kate: backspace-indents true; indent-mode Normal; indent-width 2; replace-tabs true; tab-indents true; tab-width 2;
+
+# pdf-версия POSIX 2008 2013 edition
+# Таблица нужна только для libsh и не для других программ на данный момент
+# За исключением xx и т д рассматриваются в точности формальные ошибки (т. е. понимаемые в формальном смысле, т. е. обычно ровно те, которые устанавливают errno), например, ввод stdio, read
+# Моя либа бросает исключения лишь в малой части исключительных ситуаций при вводе/выводе. т. е. при eof'е, не достижении делиметера и т. д. исключение не кидается
+# Системы, не соответствующие POSIX 2013 edition, не поддерживаются, например, не поддерживаются системы, не устанавливающие errno при неудачном malloc. Также, например, предполагается, что fputc всегда ставит errno в случае ошибки, хоть это и не указано в стандарте C. Windows поддерживается лишь по принципу "чтоб на винде собиралось". Библиотека предназначена всё же лишь для POSIX-систем, просто в ней есть хак в виде conditional compilation, чтобы её можно было и на винде собрать
+# stdio буферизует, поэтому ошибка может быть видна не сразу
+# Имя функции в выводе может быть не тем, если одна функция вызвала другую
+# Если функция may set errno, считается, что она его не устанавливает
+
+# OB - устаревшая функция, не рассматривается (я мог не заметить, что какая-нибудь функция OB)
+# DEFERRED - отложено, т. к. мне редко нужна эта функция
+# FLOAT - отложено, т. к. это floating point (кроме atof-подобных функций)
+# VAR - переменная
+# SUCCESS - always succeeds
+
+# Неклассифицированные:
+# pause - единственная функция, которая всегда (формально) fails
+# errno - неизвестно что (не факт, что переменная)
+# strerror_r - не буду оборачивать, т. к. _POSIX_C_SOURCE и _GNU_SOURCE в glibc выдают две разные версии этой функции
+
+# Types hdrs: хедеры с типами из сигнатуры и константами, которые нужны при использовании функции
+# Impl hdrs: хедер, в котором находится функция (даже для custom, чтобы проверка наличия функции cmake'ом работала), для custom'а - далее ещё и функции, нужные для реализации
+# Заголовки, отмеченные в POSIX как optional headers, не включаются сюда. И вообще, из всех хедеров в impl hdrs включается только тот, в котором реально лежит эта функция
+# Impl hdrs не должен дублировать types hdrs (за исключением случая, когда реализация custom'а требует доп. хедеров, в этом случае я вынужден поместить в начало impl hdrs "правильный" хедер для проверок cmake'а)
+# Если функция есть и в Windows, то все types hdrs тоже должны быть виндовыми
+# On error: результат в случае ошибки
+# Result: noreturn - в случае успеха всегда не возвращает, value - в случае успеха может вернуть и её результат в случае успеха имеет значение, void - в случае успеха может вернуть, но в случае успеха результат не имеет значения
+# Я помечаю как void (т. е. возвращаю void в обёртке) только если функция возвращает одно и то же в случае успеха (либо нечто неопределённое как fputs). Если может возвращаться разное, даже если это совпадает с одним из аргументов, возвращается это разное, например, см. fputc
+
+# t (types) - Types hdrs заполнен
+# h (half) - Types hdrs заполнен наполовину, т. е. хедеры с типами заполнены, а хедеры с константами - необязательно
+# m - Message заполнен
+
+# Types hdrs       | Impl hdrs        | Declaration                                                                              | On error | Result | Message
+
+# SUCCESS _Exit, _exit
+# OB _longjmp, _setjmp
+# OB _tolower
+# OB _toupper
+# DEFERRED a64l, l64a
+# SUCCESS abort
+# SUCCESS abs
+sys/socket.h       |                  | int accept (int socket, struct sockaddr *SH_RESTRICT address, socklen_t *SH_RESTRICT address_len) | -1     | value | # t, m, docs: если accept вернул ошибку, то иногда нужно попробовать вызвать accept ещё раз
+unistd.h           |                  | int access (const char *path, int amode)                                                  | -1     | void  | "%s", path # t, m, docs: access и faccessat фейлятся, если нет нужных прав
+fcntl.h            | unistd.h         | int faccessat (int fd, const char *path, int amode, int flag)                             | -1     | void  | "%s", path # t, m
+# FLOAT acos, acosf, acosl
+# FLOAT acosh, acoshf, acoshl
+# DEFERRED aio_cancel
+# DEFERRED aio_error
+# DEFERRED aio_fsync
+# DEFERRED aio_read
+# DEFERRED aio_return
+# DEFERRED aio_suspend
+# DEFERRED aio_write
+# SUCCESS alarm
+# DEFERRED alphasort, scandir
+# OB asctime, asctime_r
+# FLOAT asin, asinf, asinl
+# FLOAT asinh, asinhf, asinhl
+# SUCCESS assert
+# FLOAT atan, atanf, atanl
+# FLOAT atan2, atan2f, atan2l
+# FLOAT atanh, atanhf, atanhl
+                   | stdlib.h         | int atexit (void (*func) (void))                                                          | custom | void  | custom # h, m
+{
+  if (atexit (func) != 0)
+    {
+      sh_throwx ("atexit: error");
+    }
+}
+                   | stdlib.h         | double atof (const char *str)                                                             | custom | value | custom # h, m
+{
+  return sh_x_strtod (str, (char **) NULL);
+}
+                   | stdlib.h, limits.h | int atoi (const char *str)                                                                | custom | value | custom # h, m
+{
+  long result = sh_x_strtol (str, (char **) NULL, 10);
+
+  if (result < (long) INT_MIN || result > (long) INT_MAX)
+    {
+      sh_throwx ("atoi: out of range");
+    }
+
+  return (int) result;
+}
+                   | stdlib.h         | long atol (const char *str)                                                               | custom | value | custom # h, m
+{
+  return sh_x_strtol (str, (char **) NULL, 10);
+}
+                   | stdlib.h         | long long atoll (const char *nptr)                                                        | custom | value | custom # h, m
+{
+  return sh_x_strtoll (nptr, (char **) NULL, 10);
+}
+# DEFERRED basename
+sys/socket.h       |                  | int bind (int socket, const struct sockaddr *address, socklen_t address_len)              | -1     | void  | # h, m
+# DEFERRED bsearch
+# DEFERRED btowc
+# FLOAT cabs, cabsf, cabsl
+# FLOAT cacos, cacosf, cacosl
+# FLOAT cacosh, cacoshf, cacoshl
+stddef.h           | stdlib.h         | void *calloc (size_t nelem, size_t elsize)                                                | custom | value | custom # h, m
+{
+  void *result = calloc (nelem, elsize);
+
+  if (nelem == 0 || elsize == 0)
+    {
+      return result;
+    }
+
+  if (result == NULL)
+    {
+      sh_throw ("calloc");
+    }
+
+  return result;
+}
+# FLOAT carg, cargf, cargl
+# FLOAT casin, casinf, casinl
+# FLOAT casinh, casinhf, casinhl
+# FLOAT catan, catanf, catanl
+# FLOAT catanh, catanhf, catanhl
+# DEFERRED catclose
+# DEFERRED catgets
+# DEFERRED catopen
+# FLOAT cbrt, cbrtf, cbrtl
+# FLOAT ccos, ccosf, ccosl
+# FLOAT ccosh, ccoshf, ccoshl
+# FLOAT ceil, ceilf, ceill
+# FLOAT cexp, cexpf, cexpl
+# DEFERRED cfgetispeed
+# DEFERRED cfgetospeed
+# DEFERRED cfsetispeed
+# DEFERRED cfsetospeed
+                   | unistd.h         | int chdir (const char *path)                                                              | -1     | void  | "%s", path # h, m
+sys/types.h        | sys/stat.h       | int chmod (const char *path, mode_t mode)                                                 | -1     | void  | "%s", path # h, m
+sys/types.h        | sys/stat.h       | int fchmodat (int fd, const char *path, mode_t mode, int flag)                            | -1     | void  | "%s", path # h, m
+sys/types.h        | unistd.h         | int chown (const char *path, uid_t owner, gid_t group)                                    | -1     | void  | "%s", path # h, m
+sys/types.h        | unistd.h         | int fchownat (int fd, const char *path, uid_t owner, gid_t group, int flag)               | -1     | void  | "%s", path # h, m
+                   | unistd.h         | int chroot (const char *path)                                                             | -1     | void  | "%s", path # h, m, docs: not in POSIX, info taken from Linux man-pages
+# FLOAT cimag, cimagf, cimagl
+# SUCCESS clearerr
+time.h             |                  | clock_t clock (void)                                                                      | custom | value | custom # h, m
+{
+  clock_t result = clock ();
+
+  if (result == (clock_t) (-1))
+    {
+      sh_throwx ("clock: error");
+    }
+
+  return result;
+}
+# DEFERRED clock_getcpuclockid
+# DEFERRED clock_getres, clock_gettime, clock_settime
+time.h             |                  | int clock_nanosleep (clockid_t clock_id, int flags, const struct timespec *rqtp, struct timespec *rmtp) | external | external | external # h, m
+# FLOAT clog, clogf, clogl
+                   | unistd.h         | int close (int fildes)                                                                    | -1     | void  | # t, m, docs: close нельзя restart'ить on EINTR, см. коммент в close_nointr в src/shared/util.c в systemd
+# DEFERRED closedir
+# DEFERRED closelog, openlog, setlogmask, syslog
+# DEFERRED confstr
+sys/socket.h       |                  | int connect (int socket, const struct sockaddr *address, socklen_t address_len)           | -1     | void  | # h, m
+# FLOAT copysign, copysignf, copysignl
+# FLOAT cos, cosf, cosl
+# FLOAT cosh, coshf, coshl
+# FLOAT cpow, cpowf, cpowl
+# FLOAT cproj, cprojf, cprojl
+# FLOAT creal, crealf, creall
+sys/types.h        | fcntl.h          | int creat (const char *path, mode_t mode)                                                 | -1     | value | "%s", path # h, m
+# DEFERRED crypt
+# FLOAT csin, csinf, csinl
+# FLOAT csinh, csinhf, csinhl
+# FLOAT csqrt, csqrtf, csqrtl
+# FLOAT ctan, ctanf, ctanl
+# FLOAT ctanh, ctanhf, ctanhl
+# DEFERRED ctermid
+# OB ctime, ctime_r
+# VAR daylight
+# DEFERRED dbm_clearerr, dbm_close, dbm_delete, dbm_error, dbm_fetch, dbm_firstkey, dbm_nextkey, dbm_open, dbm_store
+# DEFERRED difftime
+# DEFERRED dirfd
+# DEFERRED dirname
+# DEFERRED div
+                   | dlfcn.h          | int dlclose (void *handle)                                                                | custom | void  | custom # h, m, docs: dlerror, а значит и x_dlclose, x_dlopen, x_dlsym могут быть thread-unsafe
+{
+  if (dlclose (handle) != 0)
+    {
+      sh_throwx ("dlclose: %s", dlerror ());
+    }
+}
+# SUCCESS dlerror
+                   | dlfcn.h          | void *dlopen (const char *file, int mode)                                                 | custom | value | custom # h, m
+{
+  void *result = dlopen (file, mode);
+
+  if (result == NULL)
+    {
+      sh_throwx ("dlopen: %s: %s", file, dlerror ());
+    }
+
+  return result;
+}
+                   | dlfcn.h          | void *dlsym (void *SH_RESTRICT handle, const char *SH_RESTRICT name)                      | custom | value | custom # h, m
+{
+  void *result = dlsym (handle, name);
+
+  if (result == NULL)
+    {
+      sh_throwx ("dlsym: %s: %s", name, dlerror ());
+    }
+
+  return result;
+}
+# DEFERRED drand48, erand48, jrand48, lcong48, lrand48, mrand48, nrand48, seed48, srand48
+                   | unistd.h         | int dup (int fildes)                                                                      | -1     | value | # h, m
+                   | unistd.h         | int dup2 (int fildes, int fildes2)                                                        | -1     | value | # h, m
+# DEFERRED duplocale
+# DEFERRED encrypt
+# DEFERRED endgrent, getgrent, setgrent
+# DEFERRED endhostent, gethostent, sethostent
+# DEFERRED endnetent, getnetbyaddr, getnetbyname, getnetent, setnetent
+# DEFERRED endprotoent, getprotobyname, getprotobynumber, getprotoent, setprotoent
+# DEFERRED endpwent, getpwent, setpwent
+# DEFERRED endservent, getservbyname, getservbyport, getservent, setservent
+# DEFERRED endutxent, getutxent, getutxid, getutxline, pututxline, setutxent
+# FLOAT erf, erff, erfl
+# FLOAT erfc, erfcf, erfcl
+# VAR environ
+                   | unistd.h         | int execl (const char *path, const char *arg0, ... /*, (char *)NULL */)                   | external | external | external # h, m
+                   | unistd.h         | int execle (const char *path, const char *arg0, ... /*, (char *)NULL, char *const envp[] */) | external | external | external # h, m
+                   | unistd.h         | int execlp (const char *file, const char *arg0, ... /*, (char *)NULL */)                  | external | external | external # h, m
+                   | unistd.h         | int execv (const char *path, char *const argv[])                                          | -1     | noreturn | "%s", path # h, m
+                   | unistd.h         | int execve (const char *path, char *const argv[], char *const envp[])                     | -1     | noreturn | "%s", path # t, m
+                   | unistd.h         | int execvp (const char *file, char *const argv[])                                         | -1     | noreturn | "%s", file # h, m
+                   | unistd.h         | int fexecve (int fd, char *const argv[], char *const envp[])                              | -1     | noreturn | # h, m
+# SUCCESS exit
+# FLOAT exp, expf, expl
+# FLOAT exp2, exp2f, exp2l
+# FLOAT expm1, expm1f, expm1l
+# FLOAT fabs, fabsf, fabsl
+# DEFERRED fattach
+                   | unistd.h         | int fchdir (int fildes)                                                                   | -1     | void  | # h, m
+sys/types.h        | sys/stat.h       | int fchmod (int fildes, mode_t mode)                                                      | -1     | void  | # h, m
+sys/types.h        | unistd.h         | int fchown (int fildes, uid_t owner, gid_t group)                                         | -1     | void  | # h, m
+stdio.h            |                  | int fclose (FILE *stream)                                                                 | EOF    | void  | # h, m
+                   | fcntl.h          | int fcntl (int fildes, int cmd, ...)                                                      | external | external | external # h, m
+                   | unistd.h         | int fdatasync (int fildes)                                                                | -1     | void  | # h, m
+# DEFERRED fdetach
+# FLOAT fdim, fdimf, fdiml
+stdio.h            |                  | FILE *fdopen (int fildes, const char *mode)                                               | NULL   | value | # h, m
+# DEFERRED fdopendir, opendir
+# FLOAT feclearexcept
+# FLOAT fegetenv, fesetenv
+# FLOAT fegetexceptflag, fesetexceptflag
+# FLOAT fegetround, fesetround
+# FLOAT feholdexcept
+# SUCCESS feof
+# FLOAT feraiseexcept
+# SUCCESS ferror
+# FLOAT fetestexcept
+# FLOAT feupdateenv
+stdio.h            |                  | int fflush (FILE *stream)                                                                 | EOF    | void  | # h, m
+# DEFERRED ffs
+stdio.h            | stdio.h, errno.h | int fgetc (FILE *stream)                                                                  | custom | value | custom # h, m, docs: делает clearerr (то же самое относится к остальному вводу stdio.h, perror, psiginfo, psignal)
+{
+  clearerr (stream);
+
+  int result = fgetc (stream);
+  int saved_errno = errno;
+
+  if (result == EOF && !feof (stream))
+    {
+      errno = saved_errno;
+      sh_throw ("fgetc");
+    }
+
+  return result;
+}
+# DEFERRED fgetpos
+stdio.h            | stdio.h, errno.h | char *fgets (char *SH_RESTRICT s, int n, FILE *SH_RESTRICT stream)                        | custom | value | custom # h, m
+{
+  clearerr (stream);
+
+  char *result = fgets (s, n, stream);
+  int saved_errno = errno;
+
+  if (result == NULL && !feof (stream))
+    {
+      errno = saved_errno;
+      sh_throw ("fgets");
+    }
+
+  return result;
+}
+# DEFERRED fgetwc
+# DEFERRED fgetws
+stdio.h            |                  | int fileno (FILE *stream)                                                                 | -1     | value | # h, m
+# DEFERRED flockfile, ftrylockfile, funlockfile
+# FLOAT floor, floorf, floorl
+# FLOAT fma, fmaf, fmal
+# FLOAT fmax, fmaxf, fmaxl
+# DEFERRED fmemopen
+# FLOAT fmin, fminf, fminl
+# FLOAT fmod, fmodf, fmodl
+# DEFERRED fmtmsg
+# DEFERRED fnmatch
+stdio.h            |                  | FILE *fopen (const char *SH_RESTRICT pathname, const char *SH_RESTRICT mode)              | NULL   | value | "%s", pathname # t, m
+sys/types.h        | unistd.h         | pid_t fork (void)                                                                         | (pid_t) (-1) | value | # h, m, docs: возвращает два значения
+# DEFERRED fpathconf, pathconf
+# FLOAT fpclassify
+                   | stdio.h          | int dprintf (int fildes, const char *SH_RESTRICT format, ...)                             | custom | value | custom # h, m
+{
+  _SH_V (format, int, sh_x_vdprintf (fildes, format, ap));
+}
+stdio.h            |                  | int fprintf (FILE *SH_RESTRICT stream, const char *SH_RESTRICT format, ...)               | custom | value | custom # h, m
+{
+  _SH_V (format, int, sh_x_vfprintf (stream, format, ap));
+}
+                   | stdio.h          | int printf (const char *SH_RESTRICT format, ...)                                          | custom | value | custom # h, m
+{
+  _SH_V (format, int, sh_x_vprintf (format, ap));
+}
+stddef.h           | stdio.h          | int snprintf (char *SH_RESTRICT s, size_t n, const char *SH_RESTRICT format, ...)         | custom | value | custom # h, m
+{
+  _SH_V (format, int, sh_x_vsnprintf (s, n, format, ap));
+}
+                   | stdio.h          | int sprintf (char *SH_RESTRICT s, const char *SH_RESTRICT format, ...)                    | custom | value | custom # h, m
+{
+  _SH_V (format, int, sh_x_vsprintf (s, format, ap));
+}
+stdio.h            |                  | int fputc (int c, FILE *stream)                                                           | EOF    | value | # h, m, docs: да, возвращаемое значение важно, хоть оно и равно c, UNIX-way! :)
+stdio.h            |                  | int fputs (const char *SH_RESTRICT s, FILE *SH_RESTRICT stream)                           | EOF    | void  | # h, m, docs: void, чтоб портируемо было
+# DEFERRED fputwc
+# DEFERRED fputws
+stdio.h            | stdio.h, errno.h | size_t fread (void *SH_RESTRICT ptr, size_t size, size_t nitems, FILE *SH_RESTRICT stream) | custom | value | custom # h, m
+{
+  clearerr (stream);
+
+  size_t result = fread (ptr, size, nitems, stream);
+  int saved_errno = errno;
+
+  if (result != nitems && !feof (stream))
+    {
+      errno = saved_errno;
+      sh_throw ("fread");
+    }
+
+  return result;
+}
+# SUCCESS free
+# SUCCESS freeaddrinfo
+netdb.h            |                  | int getaddrinfo (const char *SH_RESTRICT nodename, const char *SH_RESTRICT servname, const struct addrinfo *SH_RESTRICT hints, struct addrinfo **SH_RESTRICT res) | custom | void  | custom # h, m
+{
+  int result = getaddrinfo (nodename, servname, hints, res);
+
+  if (result != 0)
+    {
+      sh_throwx ("getaddrinfo: host %s, port %s: %s", nodename, servname, gai_strerror (result));
+    }
+}
+# DEFERRED freelocale
+stdio.h            |                  | FILE *freopen (const char *SH_RESTRICT pathname, const char *SH_RESTRICT mode, FILE *SH_RESTRICT stream) | custom | value | custom # h, m
+{
+  FILE *result = freopen (pathname, mode, stream);
+
+  if (result == NULL)
+    {
+      if (pathname == NULL)
+        {
+          sh_throw ("freopen");
+        }
+      else
+        {
+          sh_throw ("freopen: %s", pathname);
+        }
+    }
+
+  return result;
+}
+# FLOAT frexp, frexpf, frexpl
+stdio.h            |                  | int fscanf (FILE *SH_RESTRICT stream, const char *SH_RESTRICT format, ...)                | custom | value | custom # h, m
+{
+  _SH_V (format, int, sh_x_vfscanf (stream, format, ap));
+}
+                   | stdio.h          | int scanf (const char *SH_RESTRICT format, ...)                                           | custom | value | custom # h, m
+{
+  _SH_V (format, int, sh_x_vscanf (format, ap));
+}
+                   | stdio.h          | int sscanf (const char *SH_RESTRICT s, const char *SH_RESTRICT format, ...)               | custom | value | custom # h, m
+{
+  _SH_V (format, int, sh_x_vsscanf (s, format, ap));
+}
+# DEFERRED fseek, fseeko
+# DEFERRED fsetpos
+sys/stat.h         |                  | int fstat (int fildes, struct stat *buf)                                                  | -1     | void  | # h, m
+sys/stat.h         |                  | int fstatat (int fd, const char *SH_RESTRICT path, struct stat *SH_RESTRICT buf, int flag) | -1     | void  | "%s", path # h, m
+sys/stat.h         |                  | int lstat (const char *SH_RESTRICT path, struct stat *SH_RESTRICT buf)                    | -1     | void  | "%s", path # h, m
+sys/stat.h         |                  | int stat (const char *SH_RESTRICT path, struct stat *SH_RESTRICT buf)                     | -1     | void  | "%s", path # h, m
+# DEFERRED fstatvfs, statvfs
+                   | unistd.h         | int fsync (int fildes)                                                                    | -1     | void  | # h, m
+# DEFERRED ftell, ftello
+# DEFERRED ftok
+# DEFERRED ftruncate
+# OB ftw
+# DEFERRED futimens, utimensat, utimes
+# DEFERRED fwide
+# DEFERRED fwprintf, swprintf, wprintf
+stdio.h            |                  | size_t fwrite (const void *SH_RESTRICT ptr, size_t size, size_t nitems, FILE *SH_RESTRICT stream) | != nitems | value | # h, m
+# DEFERRED fwscanf, swscanf, wscanf
+# SUCCESS gai_strerror
+stdio.h            |                  | int getc (FILE *stream)                                                                   | custom | value | custom # h, m
+{
+  return sh_x_fgetc (stream);
+}
+# DEFERRED getc_unlocked, getchar_unlocked, putc_unlocked, putchar_unlocked
+                   | stdio.h          | int getchar (void)                                                                        | custom | value | custom # h, m
+{
+  return sh_x_fgetc (stdin);
+}
+stddef.h           | unistd.h         | char *getcwd (char *buf, size_t size)                                                     | NULL   | value | # h, m
+# DEFERRED getdate
+stdio.h            | stdio.h, errno.h | ssize_t getdelim (char **SH_RESTRICT lineptr, size_t *SH_RESTRICT n, int delimiter, FILE *SH_RESTRICT stream) | custom | value | custom # h, m
+{
+  clearerr (stream);
+
+  ssize_t result = getdelim (lineptr, n, delimiter, stream);
+  int saved_errno = errno;
+
+  if (result == -1 && !feof (stream))
+    {
+      errno = saved_errno;
+      sh_throw ("getdelim");
+    }
+
+  return result;
+}
+stdio.h            |                  | ssize_t getline (char **SH_RESTRICT lineptr, size_t *SH_RESTRICT n, FILE *SH_RESTRICT stream) | custom | value | custom # h, m
+{
+  return sh_x_getdelim (lineptr, n, '\n', stream);
+}
+# SUCCESS getegid
+                   | stdlib.h         | char *getenv (const char *name)                                                           | custom | value | custom # h, m
+{
+  char *result = getenv (name);
+
+  if (result == NULL)
+    {
+      sh_throwx ("getenv: no such variable");
+    }
+
+  return result;
+}
+# SUCCESS geteuid
+# SUCCESS getgid
+# DEFERRED getgrgid, getgrgid_r
+# DEFERRED getgrnam, getgrnam_r
+# DEFERRED getgroups
+# DEFERRED gethostid
+# DEFERRED gethostname
+# DEFERRED getitimer, setitimer
+# DEFERRED getlogin, getlogin_r
+# DEFERRED getmsg, getpmsg
+# DEFERRED getnameinfo
+# DEFERRED getopt
+# VAR optarg, opterr, optind, optopt
+# DEFERRED getpeername
+sys/types.h        | unistd.h         | pid_t getpgid (pid_t pid)                                                                 | (pid_t) (-1) | value | # h, m
+# SUCCESS getpgrp
+# SUCCESS getpid
+# SUCCESS getppid
+# DEFERRED getpriority, setpriority
+# DEFERRED getpwnam, getpwnam_r
+# DEFERRED getpwuid, getpwuid_r
+# DEFERRED getrlimit, setrlimit
+# DEFERRED getrusage
+# OB gets
+sys/types.h        | unistd.h         | pid_t getsid (pid_t pid)                                                                  | (pid_t) (-1) | value | # h, m
+# DEFERRED getsockname
+# DEFERRED getsockopt
+# DEFERRED getsubopt
+# DEFERRED gettimeofday
+# SUCCESS getuid
+# DEFERRED getwc
+# DEFERRED getwchar
+# DEFERRED glob, globfree
+# DEFERRED gmtime, gmtime_r
+# DEFERRED grantpt
+# DEFERRED hcreate, hdestroy, hsearch
+# DEFERRED htonl, htons, ntohl, ntohs
+# FLOAT hypot, hypotf, hypotl
+# DEFERRED iconv
+# DEFERRED iconv_close
+# DEFERRED iconv_open
+# DEFERRED if_freenameindex
+# DEFERRED if_indextoname
+# DEFERRED if_nameindex
+# DEFERRED if_nametoindex
+# FLOAT ilogb, ilogbf, ilogbl
+# DEFERRED imaxabs
+# DEFERRED imaxdiv
+# DEFERRED inet_addr, inet_ntoa
+# DEFERRED inet_ntop, inet_pton
+# DEFERRED initstate, random, setstate, srandom
+# DEFERRED insque, remque
+# OB ioctl
+# DEFERRED isalnum, isalnum_l
+# DEFERRED isalpha, isalpha_l
+# OB isascii
+# OB isastream
+                   | unistd.h         | int isatty (int fildes)                                                                   | custom | void  | custom # h, m, docs: isatty работает как assert, бросание исключения может означать что угодно
+{
+  if (isatty (fildes) == 0)
+    {
+      sh_throwx ("isatty: error");
+    }
+}
+# DEFERRED isblank, isblank_l
+# DEFERRED iscntrl, iscntrl_l
+# DEFERRED isdigit, isdigit_l
+# FLOAT isfinite
+# DEFERRED isgraph, isgraph_l
+# FLOAT isgreater
+# FLOAT isgreaterequal
+# FLOAT isinf
+# FLOAT isless
+# FLOAT islessequal
+# FLOAT islessgreater
+# DEFERRED islower, islower_l
+# FLOAT isnan
+# FLOAT isnormal
+# DEFERRED isprint, isprint_l
+# DEFERRED ispunct, ispunct_l
+# DEFERRED isspace, isspace_l
+# FLOAT isunordered
+# DEFERRED isupper, isupper_l
+# DEFERRED iswalnum, iswalnum_l
+# DEFERRED iswalpha, iswalpha_l
+# DEFERRED iswblank, iswblank_l
+# DEFERRED iswcntrl, iswcntrl_l
+# DEFERRED iswctype, iswctype_l
+# DEFERRED iswdigit, iswdigit_l
+# DEFERRED iswgraph, iswgraph_l
+# DEFERRED iswlower, iswlower_l
+# DEFERRED iswprint, iswprint_l
+# DEFERRED iswpunct, iswpunct_l
+# DEFERRED iswspace, iswspace_l
+# DEFERRED iswupper, iswupper_l
+# DEFERRED iswxdigit, iswxdigit_l
+# DEFERRED isxdigit, isxdigit_l
+# FLOAT j0, j1, jn
+sys/types.h        | signal.h         | int kill (pid_t pid, int sig)                                                             | -1     | void  | # h, m
+# DEFERRED killpg
+# DEFERRED labs, llabs
+# DEFERRED lchown
+# FLOAT ldexp, ldexpf, ldexpl
+# DEFERRED ldiv, lldiv
+# FLOAT lgamma, lgammaf, lgammal
+# VAR signgam
+# DEFERRED link, linkat
+# DEFERRED lio_listio
+                   | sys/socket.h     | int listen (int socket, int backlog)                                                      | -1     | void  | # h
+# FLOAT llrint, llrintf, llrintl
+# FLOAT llround, llroundf, llroundl
+# DEFERRED localeconv
+# DEFERRED localtime, localtime_r
+# DEFERRED lockf
+# FLOAT log, logf, logl
+# FLOAT log10, log10f, log10l
+# FLOAT log1p, log1pf, log1pl
+# FLOAT log2, log2f, log2l
+# FLOAT logb, logbf, logbl
+# SUCCESS longjmp
+# FLOAT lrint, lrintf, lrintl
+# FLOAT lround, lroundf, lroundl
+# DEFERRED lsearch, lfind
+# DEFERRED lseek
+stddef.h           | stdlib.h         | void *malloc (size_t size)                                                                | custom | value | custom # h, m, docs: ignores 0, как и calloc и realloc
+{
+  void *result = malloc (size);
+
+  if (size == 0)
+    {
+      return result;
+    }
+
+  if (result == NULL)
+    {
+      sh_throw ("malloc");
+    }
+
+  return result;
+}
+# DEFERRED mblen
+# DEFERRED mbrlen
+# DEFERRED mbrtowc
+# DEFERRED mbsinit
+# DEFERRED mbsnrtowcs, mbsrtowcs
+# DEFERRED mbstowcs
+# DEFERRED mbtowc
+# DEFERRED memccpy
+stddef.h           | string.h         | void *memchr (const void *s, int c, size_t n)                                             | external | external | external # h, m
+# SUCCESS memcmp
+# SUCCESS memcpy
+# SUCCESS memmove
+# SUCCESS memset
+sys/types.h        | sys/stat.h       | int mkdir (const char *path, mode_t mode)                                                 | -1     | void  | # h
+sys/types.h        | sys/stat.h       | int mkdirat (int fd, const char *path, mode_t mode)                                       | -1     | void  | # h
+# DEFERRED mkdtemp, mkstemp
+# DEFERRED mkfifo, mkfifoat
+# DEFERRED mknod, mknodat
+# DEFERRED mktime
+# DEFERRED mlock, munlock
+# DEFERRED mlockall, munlockall
+# DEFERRED mmap
+# FLOAT modf, modff, modfl
+# DEFERRED mprotect
+# DEFERRED mq_close
+# DEFERRED mq_getattr
+# DEFERRED mq_notify
+# DEFERRED mq_open
+# DEFERRED mq_receive, mq_timedreceive
+# DEFERRED mq_send, mq_timedsend
+# DEFERRED mq_setattr
+# DEFERRED mq_unlink
+# DEFERRED msgctl
+# DEFERRED msgget
+# DEFERRED msgrcv
+# DEFERRED msgsnd
+# DEFERRED msync
+# DEFERRED munmap
+# FLOAT nan, nanf, nanl
+time.h             |                  | int nanosleep (const struct timespec *rqtp, struct timespec *rmtp)                        | external | external | external # h, m
+# FLOAT nearbyint, nearbyintf, nearbyintl
+# DEFERRED newlocale
+# FLOAT nextafter, nextafterf, nextafterl, nexttoward, nexttowardf, nexttowardl
+# DEFERRED nftw
+# DEFERRED nice
+# DEFERRED nl_langinfo, nl_langinfo_l
+fcntl.h            | fcntl.h, stdarg.h | int open (const char *path, int oflag, ...)                                               | custom | value | custom # h, m
+{
+  int result;
+
+  va_list ap;
+  va_start (ap, oflag);
+
+  if (oflag & O_CREAT)
+    {
+      result = open (path, oflag, va_arg (ap, int));
+    }
+  else
+    {
+      result = open (path, oflag);
+    }
+
+  va_end (ap);
+
+  if (result == -1)
+    {
+      sh_throw ("open: %s", path);
+    }
+
+  return result;
+}
+# DEFERRED openat
+# DEFERRED open_memstream, open_wmemstream
+stdio.h            |                  | int pclose (FILE *stream)                                                                 | -1     | value | # h, docs: можно обращаться с результатом как со status'ом wait'а
+                   | stdio.h, errno.h | void perror (const char *s)                                                               | custom | void  | custom # h, m
+{
+  clearerr (stderr);
+  perror (s);
+
+  int saved_errno = errno;
+
+  if (ferror (stderr))
+    {
+      errno = saved_errno;
+      sh_throw ("perror");
+    }
+}
+                   | unistd.h         | int pipe (int fildes[2])                                                                  | -1     | void  | # h, m
+poll.h             |                  | int poll (struct pollfd fds[], nfds_t nfds, int timeout)                                  | external | external | external # h, m
+stdio.h            |                  | FILE *popen (const char *command, const char *mode)                                       | custom | value | custom # h, m
+{
+  FILE *result = popen (command, mode);
+
+  if (result == NULL)
+    {
+      sh_throwx ("popen: error");
+    }
+
+  return result;
+}
+# DEFERRED posix_fadvise
+# DEFERRED posix_fallocate
+# DEFERRED posix_madvise
+# DEFERRED posix_mem_offset
+# DEFERRED posix_memalign
+# DEFERRED posix_openpt
+# DEFERRED posix_spawn*
+# DEFERRED posix_trace*
+# DEFERRED posix_typed_mem_get_info
+# DEFERRED posix_typed_mem_open
+# FLOAT pow, powf, powl
+sys/select.h       |                  | int pselect (int nfds, fd_set *SH_RESTRICT readfds, fd_set *SH_RESTRICT writefds, fd_set *SH_RESTRICT errorfds, const struct timespec *SH_RESTRICT timeout, const sigset_t *SH_RESTRICT sigmask) | external | external | external # h, m
+sys/select.h       |                  | int select (int nfds, fd_set *SH_RESTRICT readfds, fd_set *SH_RESTRICT writefds, fd_set *SH_RESTRICT errorfds, struct timeval *SH_RESTRICT timeout) | external | external | external # h, m
+# SUCCESS FD_CLR, FD_ISSET, FD_SET, FD_ZERO
+signal.h           | signal.h, stdio.h, errno.h | void psiginfo (const siginfo_t *pinfo, const char *message)                               | custom | void  | custom # h, m
+{
+  clearerr (stderr);
+  psiginfo (pinfo, message);
+
+  int saved_errno = errno;
+
+  if (ferror (stderr))
+    {
+      errno = saved_errno;
+      sh_throw ("psiginfo");
+    }
+}
+                   | signal.h, stdio.h, errno.h | void psignal (int signum, const char *message)                                            | custom | void  | custom # h, m
+{
+  clearerr (stderr);
+  psignal (signum, message);
+
+  int saved_errno = errno;
+
+  if (ferror (stderr))
+    {
+      errno = saved_errno;
+      sh_throw ("psignal");
+    }
+}
+# DEFERRED pthread*
+signal.h           |                  | int sigprocmask (int how, const sigset_t *SH_RESTRICT set, sigset_t *SH_RESTRICT oset)    | -1     | void  | # h, m
+# DEFERRED ptsname
+stdio.h            |                  | int putc (int c, FILE *stream)                                                            | EOF    | value | # h, m
+                   | stdio.h          | int putchar (int c)                                                                       | EOF    | value | # h, m
+# DEFERRED putenv
+# DEFERRED putmsg, putpmsg
+                   | stdio.h          | int puts (const char *s)                                                                  | EOF    | void  | # h, m, docs: void, чтоб портируемо было
+# DEFERRED putwc
+# DEFERRED putwchar
+# DEFERRED qsort
+                   | signal.h         | int raise (int sig)                                                                       | < 0    | void  | # h
+# DEFERRED rand, rand_r, srand
+sys/types.h        | unistd.h         | ssize_t pread (int fildes, void *buf, size_t nbyte, off_t offset)                         | -1     | value | # h
+sys/types.h        | unistd.h         | ssize_t read (int fildes, void *buf, size_t nbyte)                                        | -1     | value | # h, m
+# DEFERRED readdir, readdir_r
+# DEFERRED readlink, readlinkat
+# DEFERRED readv
+stddef.h           | stdlib.h         | void *realloc (void *ptr, size_t size)                                                    | custom | value | custom # h, m
+{
+  void *result = realloc (ptr, size);
+
+  if (size == 0)
+    {
+      return result;
+    }
+
+  if (result == NULL)
+    {
+      sh_throw ("realloc");
+    }
+
+  return result;
+}
+# DEFERRED realpath
+# DEFERRED recv
+# DEFERRED recvfrom
+# DEFERRED recvmsg
+# DEFERRED regcomp, regerror, regexec, regfree
+# FLOAT remainder, remainderf, remainderl
+                   | stdio.h          | int remove (const char *path)                                                             | -1     | void  | # h
+# FLOAT remquo, remquof, remquol
+# DEFERRED rename, renameat
+# DEFERRED rewind
+# DEFERRED rewinddir
+# FLOAT rint, rintf, rintl
+                   | unistd.h         | int rmdir (const char *path)                                                              | -1     | void  | # h
+# FLOAT round, roundf, roundl
+# FLOAT scalbln, scalblnf, scalblnl, scalbn, scalbnf, scalbnl
+# DEFERRED sched_get_priority_max, sched_get_priority_min
+# DEFERRED sched_getparam
+# DEFERRED sched_getscheduler
+# DEFERRED sched_rr_get_interval
+# DEFERRED sched_setparam
+# DEFERRED sched_setscheduler
+# DEFERRED sched_yield
+# DEFERRED seekdir
+# DEFERRED sem_close
+# DEFERRED sem_destroy
+# DEFERRED sem_getvalue
+# DEFERRED sem_init
+# DEFERRED sem_open
+# DEFERRED sem_post
+# DEFERRED sem_timedwait
+# DEFERRED sem_trywait, sem_wait
+# DEFERRED sem_unlink
+# DEFERRED semctl
+# DEFERRED semget
+# DEFERRED semop
+# DEFERRED send
+sys/types.h        | sys/sendfile.h   | ssize_t sendfile (int out_fd, int in_fd, off_t *offset, size_t count)                      | -1     | value | # h, m, docs: not in POSIX, info taken from Linux man-pages, splice and sendfile man pages have issues: bugzilla.kernel.org/show_bug.cgi?id=86001 , https://bugzilla.kernel.org/show_bug.cgi?id=90911
+# DEFERRED sendmsg
+# DEFERRED sendto
+stdio.h            |                  | void setbuf (FILE *SH_RESTRICT stream, char *SH_RESTRICT buf)                             | custom | void  | custom # h, m, docs: sh_x_setbuf проверяет ошибки
+{
+  if (buf != NULL)
+    {
+      sh_x_setvbuf (stream, buf, _IOFBF, BUFSIZ);
+    }
+  else
+    {
+      sh_x_setvbuf (stream, buf, _IONBF, BUFSIZ);
+    }
+}
+# DEFERRED setegid
+                   | stdlib.h         | int setenv (const char *envname, const char *envval, int overwrite)                       | -1     | void  | # h, m
+# DEFERRED seteuid
+# DEFERRED setgid
+# SUCCESS setjmp
+# DEFERRED setkey
+                   | locale.h         | char *setlocale (int category, const char *locale)                                        | custom | value | custom # h, m
+{
+  char *result = setlocale (category, locale);
+
+  if (result == NULL)
+    {
+      sh_throwx ("setlocale: error");
+    }
+
+  return result;
+}
+# DEFERRED setpgid
+# DEFERRED setpgrp
+# DEFERRED setregid
+# DEFERRED setreuid
+sys/types.h        | unistd.h         | pid_t setsid (void)                                                                       | (pid_t) (-1) | value | # h, m
+sys/socket.h       |                  | int setsockopt (int socket, int level, int option_name, const void *option_value, socklen_t option_len) | -1     | void  | # h
+sys/types.h        | unistd.h         | int setuid (uid_t uid)                                                                    | -1     | void  | # h, m
+stdio.h            |                  | int setvbuf (FILE *SH_RESTRICT stream, char *SH_RESTRICT buf, int type, size_t size)      | custom | void  | custom # h, m
+{
+  if (setvbuf (stream, buf, type, size) != 0)
+    {
+      sh_throwx ("setvbuf: error");
+    }
+}
+# DEFERRED shm_*
+# DEFERRED shm*
+                   | sys/socket.h     | int shutdown (int socket, int how)                                                        | -1     | void  | # h
+signal.h           |                  | int sigaction (int sig, const struct sigaction *SH_RESTRICT act, struct sigaction *SH_RESTRICT oact) | -1     | void  | # h
+signal.h           |                  | int sigaddset (sigset_t *set, int signo)                                                  | -1     | void  | # h
+# DEFERRED sigaltstack
+signal.h           |                  | int sigdelset (sigset_t *set, int signo)                                                  | -1     | void  | # h
+signal.h           |                  | int sigemptyset (sigset_t *set)                                                           | -1     | void  | # h
+signal.h           |                  | int sigfillset (sigset_t *set)                                                            | -1     | void  | # h
+# OB sighold, sigignore, sigpause, sigrelse, sigset
+# OB siginterrupt
+# DEFERRED sigismember
+# SUCCESS siglongjmp
+# DEFERRED signal
+# FLOAT signbit
+# DEFERRED sigpending
+# DEFERRED sigqueue
+# SUCCESS sigsetjmp
+# DEFERRED sigsuspend
+# DEFERRED sigtimedwait, sigwaitinfo
+# DEFERRED sigwait
+# FLOAT sin, sinf, sinl
+# FLOAT sinh, sinhf, sinhl
+                   | unistd.h         | unsigned sleep (unsigned seconds)                                                         | external | external | external # h, m
+# DEFERRED sockatmark
+                   | sys/socket.h     | int socket (int domain, int type, int protocol)                                           | -1     | value | # h
+# DEFERRED socketpair
+# FLOAT sqrt, sqrtf, sqrtl
+# VAR stderr, stdin, stdout
+# DEFERRED strcasecmp, strcasecmp_l, strncasecmp, strncasecmp_l
+# SUCCESS strcat
+                   | string.h         | char *strchr (const char *s, int c)                                                       | external | external | external # h, m
+# SUCCESS strcmp
+# DEFERRED strcoll, strcoll_l
+# SUCCESS stpcpy, strcpy
+# SUCCESS strcspn
+                   | string.h         | char *strdup (const char *s)                                                              | NULL   | value | # h
+stddef.h           | string.h         | char *strndup (const char *s, size_t size)                                                | NULL   | value | # h
+                   | string.h, errno.h | char *strerror (int errnum)                                                               | custom | value | custom # h, m, docs: может вообще не падать, если реализация не ставит errno
+{
+  int saved_errno = errno;
+
+  errno = 0;
+
+  char *result = strerror (errnum);
+
+  if (errno != 0)
+    {
+      sh_throw ("strerror");
+    }
+
+  errno = saved_errno;
+
+  return result;
+}
+# DEFERRED strerror_l
+# DEFERRED strfmon, strfmon_l
+# DEFERRED strftime, strftime_l
+# SUCCESS strlen, strnlen
+# SUCCESS strncat
+# SUCCESS strncmp
+# SUCCESS stpncpy, strncpy
+# DEFERRED strpbrk
+# DEFERRED strptime
+# DEFERRED strrchr
+                   | string.h, errno.h | char *strsignal (int signum)                                                              | custom | value | custom # h, m
+{
+  int saved_errno = errno;
+
+  errno = 0;
+
+  char *result = strsignal (signum);
+
+  if (errno != 0)
+    {
+      sh_throw ("strsignal");
+    }
+
+  errno = saved_errno;
+
+  return result;
+}
+# SUCCESS strspn
+# DEFERRED strstr
+                   | stdlib.h, errno.h | double strtod (const char *SH_RESTRICT nptr, char **SH_RESTRICT endptr)                   | custom | value | custom # h, m
+{
+  _SH_STRTO (double, strtod, (nptr, endptr));
+}
+                   | stdlib.h, errno.h | float strtof (const char *SH_RESTRICT nptr, char **SH_RESTRICT endptr)                    | custom | value | custom # h, m
+{
+  _SH_STRTO (float, strtof, (nptr, endptr));
+}
+                   | stdlib.h, errno.h | long double strtold (const char *SH_RESTRICT nptr, char **SH_RESTRICT endptr)             | custom | value | custom # h, m
+{
+  _SH_STRTO (long double, strtold, (nptr, endptr));
+}
+inttypes.h         | inttypes.h, errno.h | intmax_t strtoimax (const char *SH_RESTRICT nptr, char **SH_RESTRICT endptr, int base) | custom | value | custom # h, m
+{
+  _SH_STRTO (intmax_t, strtoimax, (nptr, endptr, base));
+}
+inttypes.h         | inttypes.h, errno.h | uintmax_t strtoumax (const char *SH_RESTRICT nptr, char **SH_RESTRICT endptr, int base) | custom | value | custom # h, m
+{
+  _SH_STRTO (uintmax_t, strtoumax, (nptr, endptr, base));
+}
+# DEFERRED strtok, strtok_r
+                   | stdlib.h, errno.h | long strtol (const char *SH_RESTRICT str, char **SH_RESTRICT endptr, int base)       | custom | value | custom # h, m
+{
+  _SH_STRTO (long, strtol, (str, endptr, base));
+}
+                   | stdlib.h, errno.h | long long strtoll (const char *SH_RESTRICT str, char **SH_RESTRICT endptr, int base) | custom | value | custom # h, m
+{
+  _SH_STRTO (long long, strtoll, (str, endptr, base));
+}
+                   | stdlib.h, errno.h | unsigned long strtoul (const char *SH_RESTRICT str, char **SH_RESTRICT endptr, int base) | custom | value | custom # h, m
+{
+  _SH_STRTO (unsigned long, strtoul, (str, endptr, base));
+}
+                   | stdlib.h, errno.h | unsigned long long strtoull (const char *SH_RESTRICT str, char **SH_RESTRICT endptr, int base) | custom | value | custom # h, m
+{
+  _SH_STRTO (unsigned long long, strtoull, (str, endptr, base));
+}
+# DEFERRED strxfrm, strxfrm_l
+# DEFERRED swab
+# DEFERRED symlink, symlinkat
+# SUCCESS sync
+# DEFERRED sysconf
+                   | stdlib.h         | int system (const char *command)                                                          | -1     | value | # h, m, docs: не запускать с нулём
+# FLOAT tan, tanf, tanl
+# FLOAT tanh, tanhf, tanhl
+# DEFERRED tcdrain
+# DEFERRED tcflow
+# DEFERRED tcflush
+termios.h          |                  | int tcgetattr (int fildes, struct termios *termios_p)                                     | -1     | void  | # h
+# DEFERRED tcgetpgrp
+# DEFERRED tcgetsid
+# DEFERRED tcsendbreak
+termios.h          |                  | int tcsetattr (int fildes, int optional_actions, const struct termios *termios_p)         | -1     | void  | # h
+# DEFERRED tcsetpgrp
+# DEFERRED tdelete, tfind, tsearch, twalk
+# DEFERRED telldir
+# OB tempnam
+# FLOAT tgamma, tgammaf, tgammal
+time.h             |                  | time_t time (time_t *tloc)                                                                | custom | value | custom # h, m
+{
+  time_t result = time (tloc);
+
+  if (result == (time_t) (-1))
+    {
+      sh_throwx ("time: error");
+    }
+
+  return result;
+}
+# DEFERRED timer_create
+# DEFERRED timer_delete
+# DEFERRED timer_getoverrun, timer_gettime, timer_settime
+# DEFERRED times
+# DEFERRED tmpfile
+# OB tmpnam
+# OB toascii
+# DEFERRED tolower, tolower_l
+# DEFERRED toupper, toupper_l
+# DEFERRED towctrans, towctrans_l
+# DEFERRED towlower, towlower_l
+# DEFERRED towupper, towupper_l
+# FLOAT trunc, truncf, truncl
+# DEFERRED truncate
+# DEFERRED ttyname, ttyname_r
+# VAR daylight, timezone, tzname
+# DEFERRED tzset
+# OB ulimit
+# DEFERRED umask
+# DEFERRED uname
+# DEFERRED ungetc
+# DEFERRED ungetwc
+                   | unistd.h         | int unlink (const char *path)                                                             | -1     | void  | # h
+                   | unistd.h         | int unlinkat (int fd, const char *path, int flag)                                         | -1     | void  | # h
+# DEFERRED unlockpt
+                   | stdlib.h         | int unsetenv (const char *name)                                                           | -1     | void  | # h
+# DEFERRED uselocale
+# DEFERRED utime
+# SUCCESS va_arg, va_copy, va_end, va_start
+stdarg.h           | stdio.h          | int vdprintf (int fildes, const char *SH_RESTRICT format, va_list ap)                     | < 0    | value | # h, m
+stdio.h            |                  | int vfprintf (FILE *SH_RESTRICT stream, const char *SH_RESTRICT format, va_list ap)       | < 0    | value | # h, m
+stdarg.h           | stdio.h          | int vprintf (const char *SH_RESTRICT format, va_list ap)                                  | < 0    | value | # h, m
+stddef.h, stdarg.h | stdio.h          | int vsnprintf (char *SH_RESTRICT s, size_t n, const char *SH_RESTRICT format, va_list ap) | < 0    | value | # h, m, docs: не юзать sh_xx_vsnprintf при n == 0
+stdarg.h           | stdio.h          | int vsprintf (char *SH_RESTRICT s, const char *SH_RESTRICT format, va_list ap)            | < 0    | value | # h, m
+stdio.h            | stdio.h, errno.h | int vfscanf (FILE *SH_RESTRICT stream, const char *SH_RESTRICT format, va_list arg)       | custom | value | custom # h, m
+{
+  clearerr (stream);
+
+  int result = vfscanf (stream, format, arg);
+  int saved_errno = errno;
+
+  if (result == EOF && !feof (stream))
+    {
+      errno = saved_errno;
+      sh_throw ("vfscanf");
+    }
+
+  return result;
+}
+stdarg.h           | stdio.h          | int vscanf (const char *SH_RESTRICT format, va_list arg)                                  | custom | value | custom # h, m
+{
+  return sh_x_vfscanf (stdin, format, arg);
+}
+stdarg.h           | stdio.h, errno.h | int vsscanf (const char *SH_RESTRICT s, const char *SH_RESTRICT format, va_list arg)      | custom | value | custom # h, m
+{
+  int saved_errno = errno;
+
+  errno = 0;
+
+  int result = vsscanf (s, format, arg);
+
+  if (result == EOF && errno != 0)
+    {
+      // EILSEQ - encoding error
+      sh_throw ("vsscanf");
+    }
+
+  errno = saved_errno;
+
+  return result;
+}
+# DEFERRED vfwprintf, vswprintf, vwprintf
+# DEFERRED vfwscanf, vswscanf, vwscanf
+sys/wait.h         |                  | pid_t wait (int *stat_loc)                                                                | (pid_t) (-1) | value | # h, m
+sys/wait.h         |                  | pid_t waitpid (pid_t pid, int *stat_loc, int options)                                     | (pid_t) (-1) | value | # h, m
+# DEFERRED waitid
+# DEFERRED wc*
+# DEFERRED wmem*
+# DEFERRED wordexp, wordfree
+sys/types.h        | unistd.h         | ssize_t pwrite (int fildes, const void *buf, size_t nbyte, off_t offset)                  | -1     | value | # h
+sys/types.h        | unistd.h         | ssize_t write (int fildes, const void *buf, size_t nbyte)                                 | -1     | value | # h, m
+# DEFERRED writev
+# FLOAT y0, y1, yn

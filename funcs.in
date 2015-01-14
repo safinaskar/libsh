@@ -138,7 +138,6 @@ sys/types.h        | sys/stat.h       | int chmod (const char *path, mode_t mode
 sys/types.h        | sys/stat.h       | int fchmodat (int fd, const char *path, mode_t mode, int flag)                            | -1     | void  | "%s", path # h, m
 sys/types.h        | unistd.h         | int chown (const char *path, uid_t owner, gid_t group)                                    | -1     | void  | "%s", path # h, m
 sys/types.h        | unistd.h         | int fchownat (int fd, const char *path, uid_t owner, gid_t group, int flag)               | -1     | void  | "%s", path # h, m
-                   | unistd.h         | int chroot (const char *path)                                                             | -1     | void  | "%s", path # h, m, docs: not in POSIX, info taken from Linux man-pages
 # FLOAT cimag, cimagf, cimagl
 # SUCCESS clearerr
 time.h             |                  | clock_t clock (void)                                                                      | custom | value | custom # h, m

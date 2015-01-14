@@ -800,7 +800,7 @@ stddef.h           | stdlib.h         | void *realloc (void *ptr, size_t size)  
 # DEFERRED semget
 # DEFERRED semop
 # DEFERRED send
-sys/types.h        | sys/sendfile.h   | ssize_t sendfile (int out_fd, int in_fd, off_t *offset, size_t count)                      | -1     | value | # h, m, docs: not in POSIX, info taken from Linux man-pages, splice and sendfile man pages have issues: bugzilla.kernel.org/show_bug.cgi?id=86001 , https://bugzilla.kernel.org/show_bug.cgi?id=90911
+sys/types.h        | sys/sendfile.h   | ssize_t sendfile (int out_fd, int in_fd, off_t *offset, size_t count)                     | -1     | value | # h, m, docs: not in POSIX, info taken from Linux man-pages, splice and sendfile man pages have issues: bugzilla.kernel.org/show_bug.cgi?id=86001 , https://bugzilla.kernel.org/show_bug.cgi?id=90911
 # DEFERRED sendmsg
 # DEFERRED sendto
 stdio.h            |                  | void setbuf (FILE *SH_RESTRICT stream, char *SH_RESTRICT buf)                             | custom | void  | custom # h, m, docs: sh_x_setbuf проверяет ошибки
@@ -941,24 +941,24 @@ stddef.h           | string.h         | char *strndup (const char *s, size_t siz
 {
   _SH_STRTO (long double, strtold, (nptr, endptr));
 }
-inttypes.h         | inttypes.h, errno.h | intmax_t strtoimax (const char *SH_RESTRICT nptr, char **SH_RESTRICT endptr, int base) | custom | value | custom # h, m
+inttypes.h         | inttypes.h, errno.h | intmax_t strtoimax (const char *SH_RESTRICT nptr, char **SH_RESTRICT endptr, int base)    | custom | value | custom # h, m
 {
   _SH_STRTO (intmax_t, strtoimax, (nptr, endptr, base));
 }
-inttypes.h         | inttypes.h, errno.h | uintmax_t strtoumax (const char *SH_RESTRICT nptr, char **SH_RESTRICT endptr, int base) | custom | value | custom # h, m
+inttypes.h         | inttypes.h, errno.h | uintmax_t strtoumax (const char *SH_RESTRICT nptr, char **SH_RESTRICT endptr, int base)   | custom | value | custom # h, m
 {
   _SH_STRTO (uintmax_t, strtoumax, (nptr, endptr, base));
 }
 # DEFERRED strtok, strtok_r
-                   | stdlib.h, errno.h | long strtol (const char *SH_RESTRICT str, char **SH_RESTRICT endptr, int base)       | custom | value | custom # h, m
+                   | stdlib.h, errno.h | long strtol (const char *SH_RESTRICT str, char **SH_RESTRICT endptr, int base)            | custom | value | custom # h, m
 {
   _SH_STRTO (long, strtol, (str, endptr, base));
 }
-                   | stdlib.h, errno.h | long long strtoll (const char *SH_RESTRICT str, char **SH_RESTRICT endptr, int base) | custom | value | custom # h, m
+                   | stdlib.h, errno.h | long long strtoll (const char *SH_RESTRICT str, char **SH_RESTRICT endptr, int base)      | custom | value | custom # h, m
 {
   _SH_STRTO (long long, strtoll, (str, endptr, base));
 }
-                   | stdlib.h, errno.h | unsigned long strtoul (const char *SH_RESTRICT str, char **SH_RESTRICT endptr, int base) | custom | value | custom # h, m
+                   | stdlib.h, errno.h | unsigned long strtoul (const char *SH_RESTRICT str, char **SH_RESTRICT endptr, int base)  | custom | value | custom # h, m
 {
   _SH_STRTO (unsigned long, strtoul, (str, endptr, base));
 }

@@ -622,7 +622,7 @@ multicat_done (const struct sh_multicat_t *what)
 }
 
 //@ /// Это НЕ параллельный cat, т. к. всё происходит в одном потоке и синхронно (но с мультиплексированием I/O)
-//@ /// sh_multicat modifies what
+//@ /// sh_multicat modifies 'what'
 //@ /// size >= 0
 //@ /// Любые fd могут быть одинаковыми с оговоркой: после закрывания fd его нельзя использовать, т. е. нельзя {{3, 3, SH_RCLOSE | SH_WCLOSE}}, нельзя {{3, 4, SH_RCLOSE}, {3, 5, 0}}
 //@ /// sh_multicat нужен в том числе для правильной реализации "cat file - | prog"
@@ -663,7 +663,7 @@ sh_multicat (struct sh_multicat_t what[], int size)//@;
 
               while (working != 0)
                 {
-                  // Делаем poll, т. к. select может не работать с большими fd
+                  // Делаем poll, т. к. select может не работать с большими fd. Есть планы по включению ppoll в POSIX: http://austingroupbugs.net/view.php?id=881
                   sh_x_poll (p, 2 * size, -1);
 
                   for (int i = 0; i != size; ++i)

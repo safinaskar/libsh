@@ -478,6 +478,7 @@ sh_waitpid_status (pid_t pid, int options)//@;
 #endif //@
 
 #if defined (SH_HAVE_fork) //@
+//@ /// Делайте так же для каждой функции, копирующей поток (clone, pthread_create, fork, vfork и т. д.)
 pid_t //@
 sh_safe_fork (void)//@;
 {

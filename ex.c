@@ -157,6 +157,12 @@
 //@ # define _SH_LONGJMP(env) longjmp (env, 1)
 //@ #endif
 //@
+//@ #define _SH_VOID_V(format, call) \
+//@   va_list ap; \
+//@   va_start (ap, format); \
+//@   (call); \
+//@   va_end (ap)
+//@
 //@ #define _SH_V(format, type, call) \
 //@   va_list ap; \
 //@   va_start (ap, format); \
@@ -362,8 +368,15 @@ sh_set_err (FILE *err)//@;
   _sh_err = err;
 }
 
-SH_NORETURN void //@
-sh_vthrowx (const char *format, va_list ap)//@;
+//@ /// sh_warn нужен, например, для такой ситуации:
+//@ /// {
+//@ ///   sh_warn (...);
+//@ ///   cleanup, который может изменить errno
+//@ ///   SH_THROW;
+//@ /// }
+
+void //@
+sh_vwarnx (const char *format, va_list ap)//@;
 {
   if (sh_get_out () != NULL)
     {
@@ -386,12 +399,10 @@ sh_vthrowx (const char *format, va_list ap)//@;
 
       fflush (sh_get_err ());
     }
-
-  SH_THROW;
 }
 
-SH_NORETURN void //@
-sh_vthrow (const char *format, va_list ap)//@;
+void //@
+sh_vwarn (const char *format, va_list ap)//@;
 {
   int saved_errno = errno;
 
@@ -414,26 +425,44 @@ sh_vthrow (const char *format, va_list ap)//@;
       fprintf (sh_get_err (), "%s\n", strerror (saved_errno));
       fflush (sh_get_err ());
     }
+}
 
+SH_NORETURN void //@
+sh_vthrowx (const char *format, va_list ap)//@;
+{
+  sh_vwarnx (format, ap);
   SH_THROW;
+}
+
+SH_NORETURN void //@
+sh_vthrow (const char *format, va_list ap)//@;
+{
+  sh_vwarn (format, ap);
+  SH_THROW;
+}
+
+void //@
+sh_warnx (const char *format, ...)//@;
+{
+  _SH_VOID_V (format, sh_vwarnx (format, ap));
+}
+
+void //@
+sh_warn (const char *format, ...)//@;
+{
+  _SH_VOID_V (format, sh_vwarn (format, ap));
 }
 
 SH_NORETURN void //@
 sh_throwx (const char *format, ...)//@;
 {
-  va_list ap;
-  va_start (ap, format);
-  sh_vthrowx (format, ap);
-  // NOTREACHED, so no va_end
+  _SH_VOID_V (format, sh_vthrowx (format, ap));
 }
 
 SH_NORETURN void //@
 sh_throw (const char *format, ...)//@;
 {
-  va_list ap;
-  va_start (ap, format);
-  sh_vthrow (format, ap);
-  // NOTREACHED, so no va_end
+  _SH_VOID_V (format, sh_vthrow (format, ap));
 }
 
 void //@

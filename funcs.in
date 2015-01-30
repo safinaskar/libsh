@@ -349,13 +349,14 @@ stdio.h            | stdio.h, errno.h | size_t fread (void *SH_RESTRICT ptr, siz
 }
 # SUCCESS free
 # SUCCESS freeaddrinfo
-netdb.h            |                  | int getaddrinfo (const char *SH_RESTRICT nodename, const char *SH_RESTRICT servname, const struct addrinfo *SH_RESTRICT hints, struct addrinfo **SH_RESTRICT res) | custom | void  | custom # h, m
+netdb.h, sys/socket.h |                  | int getaddrinfo (const char *SH_RESTRICT nodename, const char *SH_RESTRICT servname, const struct addrinfo *SH_RESTRICT hints, struct addrinfo **SH_RESTRICT res) | custom | void  | custom # h, m, sys/socket.h содержит AF_* и SOCK_*
 {
   int result = getaddrinfo (nodename, servname, hints, res);
 
   if (result != 0)
     {
-      sh_throwx ("getaddrinfo: host %s, port %s: %s", nodename, servname, gai_strerror (result));
+      // Я не могу написать nodename:servname, т. к. nodename может быть IPv6-адресом
+      sh_throwx ("getaddrinfo: [%s]:%s: %s", nodename, servname, gai_strerror (result));
     }
 }
 # DEFERRED freelocale

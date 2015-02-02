@@ -247,7 +247,7 @@ sh_x_accept (int socket, struct sockaddr *SH_RESTRICT address, socklen_t *SH_RES
 
   return result;
 }
-#endif
+#endif //@
 
 //@ /// ---- external ----
 

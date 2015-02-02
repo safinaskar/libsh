@@ -42,7 +42,7 @@
 # DEFERRED a64l, l64a
 # SUCCESS abort
 # SUCCESS abs
-sys/socket.h       |                  | int accept (int socket, struct sockaddr *SH_RESTRICT address, socklen_t *SH_RESTRICT address_len) | -1     | value | # t, m, docs: если accept вернул ошибку, то иногда нужно попробовать вызвать accept ещё раз
+sys/socket.h       |                  | int accept (int socket, struct sockaddr *SH_RESTRICT address, socklen_t *SH_RESTRICT address_len) | external | external | external # t, m
 unistd.h           |                  | int access (const char *path, int amode)                                                  | -1     | void  | "%s", path # t, m, docs: access и faccessat фейлятся, если нет нужных прав
 fcntl.h            | unistd.h         | int faccessat (int fd, const char *path, int amode, int flag)                             | -1     | void  | "%s", path # t, m
 # FLOAT acos, acosf, acosl

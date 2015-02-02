@@ -209,6 +209,46 @@ sh_x_clock_nanosleep (clockid_t clock_id, int flags, const struct timespec *rqtp
 }
 #endif //@
 
+//@ /// ---- accept ----
+
+#if defined (SH_HAVE_accept) //@
+#include <errno.h>
+
+#include <sys/socket.h>
+
+int //@
+sh_repeat_accept (int socket, struct sockaddr *SH_RESTRICT address, socklen_t *SH_RESTRICT address_len)//@;
+{
+  for (;;)
+    {
+      int result = accept (socket, address, address_len);
+
+      if (result != -1)
+        {
+          return result;
+        }
+
+      if (errno != EWOULDBLOCK && errno != ECONNABORTED && errno != EPROTO && errno != EINTR)
+        {
+          return -1;
+        }
+    }
+}
+
+int //@
+sh_x_accept (int socket, struct sockaddr *SH_RESTRICT address, socklen_t *SH_RESTRICT address_len)//@;
+{
+  int result = sh_repeat_accept (socket, address, address_len);
+
+  if (result == -1)
+    {
+      sh_throw ("accept");
+    }
+
+  return result;
+}
+#endif
+
 //@ /// ---- external ----
 
 //@ #if defined (SH_HAVE_execl) && defined (SH_HAVE_execle) && defined (SH_HAVE_execlp)
@@ -634,6 +674,7 @@ multicat_done (const struct sh_multicat_t *what)
 //@ /// sh_multicat обычно не лочится в read и поэтому сразу же чувствует ошибки write
 //@ /// sh_multicat позволяет избежать получения SIGPIPE в большинстве случаев. Но SIGPIPE всё же возможен, если пайп закрылся между poll и write
 //@ /// Мой cat круче вашего. В моём случае в "cat | prog" cat сможет сдетектить завершение prog и сразу же завершиться
+//@ /// Инициализируйте sh_multicat_t нулями перед передачей в sh_multicat, т. к. могут быть добавлены новые поля. Инициализировать инициализатором можно, т. к. порядок полей будет неизменным
 // Не удалось доказать экспериментом, что системные вызовы Linux sendfile и splice быстрее обычного read/write
 void //@
 sh_multicat (struct sh_multicat_t what[], int size)//@;
@@ -773,7 +814,7 @@ sh_multicat (struct sh_multicat_t what[], int size)//@;
 int //@
 sh_cat (int src, int dst, int flags)//@;
 {
-  struct sh_multicat_t what;
+  struct sh_multicat_t what = {};
 
   what.src = src;
   what.dst = dst;
@@ -782,6 +823,154 @@ sh_cat (int src, int dst, int flags)//@;
   sh_multicat (&what, 1);
 
   return dst;
+}
+#endif //@
+
+#if defined (SH_HAVE_socket) && defined (SH_HAVE_connect) && defined (SH_HAVE_close) && defined (SH_HAVE_getaddrinfo) //@
+#include <sys/socket.h>
+#include <unistd.h>
+#include <netdb.h>
+
+static int
+tcp_connect_loop (const char *host, const char *protocol, struct addrinfo *res)
+{
+  for (; res != NULL; res = res->ai_next)
+    {
+      int result = socket (res->ai_family, res->ai_socktype, res->ai_protocol);
+
+      if (result != -1)
+        {
+          if (connect (result, res->ai_addr, res->ai_addrlen) != -1)
+            {
+              return result;
+            }
+
+          close (result);
+        }
+    }
+
+  // SOMEDAY: печатать больше инфы (то же для tcp_listen_loop)?
+  sh_throwx ("sh_tcp_connect: [%s]:%s: all structs returned by getaddrinfo failed", host, protocol);
+}
+
+int //@
+sh_tcp_connect (const char *host, const char *protocol, int family)//@;
+{
+  struct addrinfo hints = {};
+
+  hints.ai_family = family;
+  hints.ai_socktype = SOCK_STREAM;
+
+  struct addrinfo *res;
+
+  sh_x_getaddrinfo (host, protocol, &hints, &res);
+
+  // POSIX 2013 says that now 'res' list contains at least one item
+
+  int result;
+
+  SH_FTRY
+    {
+      result = tcp_connect_loop (host, protocol, res);
+    }
+  SH_FINALLY
+    {
+      freeaddrinfo (res);
+    }
+  SH_FEND;
+
+  return result;
+}
+#endif //@
+
+#if defined (SH_HAVE_socket) && defined (SH_HAVE_setsockopt) && defined (SH_HAVE_bind) && defined (SH_HAVE_close) && defined (SH_HAVE_getaddrinfo) && defined (SH_HAVE_listen) //@
+#include <sys/socket.h>
+#include <unistd.h>
+#include <netdb.h>
+
+static int
+tcp_listen_loop (const char *protocol, struct addrinfo *res)
+{
+  for (; res != NULL; res = res->ai_next)
+    {
+      int result = socket (res->ai_family, res->ai_socktype, res->ai_protocol);
+
+      if (result != -1)
+        {
+          const int on = 1;
+
+          if (setsockopt (result, SOL_SOCKET, SO_REUSEADDR, &on, sizeof (on)) != -1)
+            {
+              if (bind (result, res->ai_addr, res->ai_addrlen) != -1)
+                {
+                  return result;
+                }
+            }
+
+          close (result);
+        }
+    }
+
+  sh_throwx ("sh_tcp_listen: *:%s: all structs returned by getaddrinfo failed", protocol);
+}
+
+int //@
+sh_tcp_listen (const char *protocol, int family)//@;
+{
+  struct addrinfo hints = {};
+
+  hints.ai_flags = AI_PASSIVE;
+  hints.ai_family = family;
+  hints.ai_socktype = SOCK_STREAM;
+
+  struct addrinfo *res;
+
+  sh_x_getaddrinfo (NULL, protocol, &hints, &res);
+
+  int result;
+
+  SH_FTRY // res
+    {
+      result = tcp_listen_loop (protocol, res);
+
+      SH_CTRY // result
+        {
+          sh_x_listen (result, SOMAXCONN);
+        }
+      SH_CATCH
+        {
+          sh_x_close (result);
+          SH_THROW;
+        }
+      SH_CEND;
+    }
+  SH_FINALLY
+    {
+      freeaddrinfo (res);
+    }
+  SH_FEND;
+
+  return result;
+}
+#endif //@
+
+#if defined (SH_HAVE_accept) && defined (SH_HAVE_close) //@
+int //@
+sh_tcp_accept_close (int listen_fd)//@;
+{
+  int result;
+
+  SH_FTRY // listen_fd
+    {
+      result = sh_x_accept (listen_fd, NULL, NULL);
+    }
+  SH_FINALLY
+    {
+      sh_x_close (listen_fd);
+    }
+  SH_FEND;
+
+  return result;
 }
 #endif //@
 

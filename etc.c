@@ -814,7 +814,7 @@ sh_multicat (struct sh_multicat_t what[], int size)//@;
 int //@
 sh_cat (int src, int dst, int flags)//@;
 {
-  struct sh_multicat_t what = {};
+  struct sh_multicat_t what = {0};
 
   what.src = src;
   what.dst = dst;
@@ -856,7 +856,7 @@ tcp_connect_loop (const char *host, const char *protocol, struct addrinfo *res)
 int //@
 sh_tcp_connect (const char *host, const char *protocol, int family)//@;
 {
-  struct addrinfo hints = {};
+  struct addrinfo hints = {0};
 
   hints.ai_family = family;
   hints.ai_socktype = SOCK_STREAM;
@@ -917,7 +917,7 @@ tcp_listen_loop (const char *protocol, struct addrinfo *res)
 int //@
 sh_tcp_listen (const char *protocol, int family)//@;
 {
-  struct addrinfo hints = {};
+  struct addrinfo hints = {0};
 
   hints.ai_flags = AI_PASSIVE;
   hints.ai_family = family;

@@ -608,10 +608,10 @@ sh_success (int status)//@;
 //@ /// * Если не закрывать сразу же, это может привести к deadlock'ам. Например:
 //@ ///     sh_multicat ({{0, 3, sh_rclose | sh_wclose}, {4, 1, sh_rclose | sh_wclose}}); // Псевдокод, предположим, что 3 и 4 - это концы одного пайпа
 //@ ///   Тогда, если не было бы sh_wclose, был бы deadlock
-//@ const int sh_rclose     = 1 << 0;
-//@ const int sh_wshutdownw = 1 << 1;
-//@ const int sh_wclose     = 1 << 2;
-//@ const int sh_done       = 1 << 3;
+//@ static const int sh_rclose     = 1 << 0;
+//@ static const int sh_wshutdownw = 1 << 1;
+//@ static const int sh_wclose     = 1 << 2;
+//@ static const int sh_done       = 1 << 3;
 
 static sh_bool
 multicat_done (const struct sh_multicat_t *what)

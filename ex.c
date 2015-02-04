@@ -142,11 +142,8 @@
 //@ #define SH_RESTRICT // Nothing
 //@ #endif
 //@
-//@ /// sh_bool может быть ABI-несовместим с C _Bool и C++ bool (а они могут быть ABI-несовместимы друг с другом), но C sh_bool ABI-совместим с C++ sh_bool, потому что это просто int
-//@ typedef int sh_bool;
-//@
-//@ #define SH_FALSE 0
-//@ #define SH_TRUE  1
+//@ /// sh_bool может быть ABI-несовместим с C _Bool и C++ bool (а они могут быть ABI-несовместимы друг с другом), но C sh_bool ABI-совместим с C++ sh_bool, потому что это просто enum
+//@ typedef enum {sh_false = 0, sh_true = 1} sh_bool;
 //@
 //@ #ifdef SH_HAVE_sigsetjmp
 //@ # define _SH_JMP_BUF sigjmp_buf
@@ -302,11 +299,11 @@ sh_set_terminate (sh_terminate_t terminate)//@;
 //@ #define SH_FINALLY \
 //@           else \
 //@             ; \
-//@           _sh_thrown = SH_FALSE; \
+//@           _sh_thrown = sh_false; \
 //@         } \
 //@       SH_CATCH \
 //@         { \
-//@           _sh_thrown = SH_TRUE; \
+//@           _sh_thrown = sh_true; \
 //@         } \
 //@       SH_CEND; \
 //@       if (1)

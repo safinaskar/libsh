@@ -599,28 +599,28 @@ sh_success (int status)//@;
 
 //@ /// При EOF fd всегда исключается из working set, т. е. sh_multicat не продолжает читать из него дальше. Есть ситуации, когда продолжение чтения возможно, например, если это терминал. Но я не могу придумать use case'а, когда такое чтение (и игнорирование EOF'а!) было бы нужно
 //@ /// При EOF'е я не всегда закрываю input fd, т. к. это может быть терминал. И я не всегда закрываю output fd, т. к. в него просто можно писать дальше, например, сделать туда ещё один sh_multicat
-//@ /// SH_WSHUTDOWNW и SH_DONE, т. к. netcat in mind. Но даже в самом гибком netcat'е я не могу придумать use case'ы на остальные комбинации, т. е. регекс SH_[RW]SHUTDOWN[RW]
+//@ /// sh_wshutdownw и sh_done, т. к. netcat in mind. Но даже в самом гибком netcat'е я не могу придумать use case'ы на остальные комбинации, т. е. регекс SH_[RW]SHUTDOWN[RW]
 //@ /// нет RSHUTDOWNR, т. к. EOF на сокете - это уже RSHUTDOWNR
 //@ /// Вообще, эти действия придуманы вот для чего:
 //@ /// * Для более краткой записи
 //@ /// * Чтобы закрыть fd сразу же, как только он перестал быть нужен (чтобы можно было отмонтировать fs и т. д.)
 //@ /// * Чтобы можно было реализовать корректный netcat, который посылает FIN сразу же после EOF'а на stdin и закрывает stdout сразу же после FIN
 //@ /// * Если не закрывать сразу же, это может привести к deadlock'ам. Например:
-//@ ///     sh_multicat ({{0, 3, SH_RCLOSE | SH_WCLOSE}, {4, 1, SH_RCLOSE | SH_WCLOSE}}); // Псевдокод, предположим, что 3 и 4 - это концы одного пайпа
-//@ ///   Тогда, если не было бы SH_WCLOSE, был бы deadlock
-//@ #define SH_RCLOSE     (1 << 0)
-//@ #define SH_WSHUTDOWNW (1 << 1)
-//@ #define SH_WCLOSE     (1 << 2)
-//@ #define SH_DONE       (1 << 3)
+//@ ///     sh_multicat ({{0, 3, sh_rclose | sh_wclose}, {4, 1, sh_rclose | sh_wclose}}); // Псевдокод, предположим, что 3 и 4 - это концы одного пайпа
+//@ ///   Тогда, если не было бы sh_wclose, был бы deadlock
+//@ const int sh_rclose     = 1 << 0;
+//@ const int sh_wshutdownw = 1 << 1;
+//@ const int sh_wclose     = 1 << 2;
+//@ const int sh_done       = 1 << 3;
 
 static sh_bool
 multicat_done (const struct sh_multicat_t *what)
 {
-  sh_bool result = SH_TRUE;
+  sh_bool result = sh_true;
 
   // Сперва должны быть все shutdown'ы, а потом все close'ы, т. к. это может быть один fd
 
-  if (what->flags & SH_WSHUTDOWNW)
+  if (what->flags & sh_wshutdownw)
     {
       SH_CTRY
         {
@@ -628,12 +628,12 @@ multicat_done (const struct sh_multicat_t *what)
         }
       SH_CATCH
         {
-          result = SH_FALSE;
+          result = sh_false;
         }
       SH_CEND;
     }
 
-  if (what->flags & SH_RCLOSE)
+  if (what->flags & sh_rclose)
     {
       SH_CTRY
         {
@@ -641,12 +641,12 @@ multicat_done (const struct sh_multicat_t *what)
         }
       SH_CATCH
         {
-          result = SH_FALSE;
+          result = sh_false;
         }
       SH_CEND;
     }
 
-  if (what->flags & SH_WCLOSE)
+  if (what->flags & sh_wclose)
     {
       SH_CTRY
         {
@@ -654,7 +654,7 @@ multicat_done (const struct sh_multicat_t *what)
         }
       SH_CATCH
         {
-          result = SH_FALSE;
+          result = sh_false;
         }
       SH_CEND;
     }
@@ -665,7 +665,7 @@ multicat_done (const struct sh_multicat_t *what)
 //@ /// Это НЕ параллельный cat, т. к. всё происходит в одном потоке и синхронно (но с мультиплексированием I/O)
 //@ /// sh_multicat modifies 'what'
 //@ /// size >= 0
-//@ /// Любые fd могут быть одинаковыми с оговоркой: после закрывания fd его нельзя использовать, т. е. нельзя {{3, 3, SH_RCLOSE | SH_WCLOSE}}, нельзя {{3, 4, SH_RCLOSE}, {3, 5, 0}}
+//@ /// Любые fd могут быть одинаковыми с оговоркой: после закрывания fd его нельзя использовать, т. е. нельзя {{3, 3, sh_rclose | sh_wclose}}, нельзя {{3, 4, sh_rclose}, {3, 5, 0}}
 //@ /// sh_multicat нужен в том числе для правильной реализации "cat file - | prog"
 //@ /// sh_multicat применяет действия в любом случае
 //@ /// sh_multicat всегда завершается в случае любой ошибки, т. к. нет контрюзекейса
@@ -746,7 +746,7 @@ sh_multicat (struct sh_multicat_t what[], int size)//@;
 
                               what[i].src = -1;
 
-                              if (what[i].flags & SH_DONE)
+                              if (what[i].flags & sh_done)
                                 {
                                   goto done;
                                 }
@@ -777,7 +777,7 @@ sh_multicat (struct sh_multicat_t what[], int size)//@;
     {
       if (working != 0)
         {
-          sh_bool result = SH_TRUE;
+          sh_bool result = sh_true;
 
           for (int i = 0; i != size; ++i)
             {
@@ -797,14 +797,14 @@ sh_multicat (struct sh_multicat_t what[], int size)//@;
 }
 
 //@ /// "cat a b > out" равен следующему коду (не exception-safe):
-//@ /// sh_cat (sh_x_open ("b", O_RDONLY), sh_cat (sh_x_open ("a", O_RDONLY), sh_x_creat ("out", 0666), SH_RCLOSE), SH_RCLOSE | SH_WCLOSE)
+//@ /// sh_cat (sh_x_open ("b", O_RDONLY), sh_cat (sh_x_open ("a", O_RDONLY), sh_x_creat ("out", 0666), sh_rclose), sh_rclose | sh_wclose)
 //@ /// (такой сжатый стиль - особенность C, см. например, i++ и ++i, strcpy)
 //@ /// Или следующему exception-safe, который выглядит даже красивее:
 //@ /// int out = sh_x_creat ("out", 0666);
 //@ /// SH_FTRY
 //@ ///   {
-//@ ///     sh_cat (sh_x_open ("a", O_RDONLY), out, SH_RCLOSE);
-//@ ///     sh_cat (sh_x_open ("b", O_RDONLY), out, SH_RCLOSE);
+//@ ///     sh_cat (sh_x_open ("a", O_RDONLY), out, sh_rclose);
+//@ ///     sh_cat (sh_x_open ("b", O_RDONLY), out, sh_rclose);
 //@ ///   }
 //@ /// SH_FINALLY
 //@ ///   {

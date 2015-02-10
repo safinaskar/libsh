@@ -333,7 +333,7 @@ sh_set_program (const char *program)//@;
 {
   if (program == NULL)
     {
-      sh_throwx ("sh_set_program: NULL; it seems this program started with NULL argv[0]");
+      sh_throwx ("sh_set_program: NULL; it seems a NULL argv[0] was passed through an exec system call");
     }
 
   _sh_program = program;

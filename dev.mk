@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-SHELL = /bin/bash # Because pipefail
+SHELL = /bin/bash # Because of pipefail
 
 GEN_HEADER = grep '//@' $^ | sed 's~ *//@\( \|\)~~' > $@ || { rm -f $@; exit 1; }
 

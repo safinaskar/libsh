@@ -189,7 +189,7 @@ sys/types.h        | fcntl.h          | int creat (const char *path, mode_t mode
     }
 }
 # SUCCESS dlerror
-                   | dlfcn.h          | void *dlopen (const char *file, int mode)                                                 | custom | value | custom # h, m
+dlfcn.h            |                  | void *dlopen (const char *file, int mode)                                                 | custom | value | custom # h, m
 {
   void *result = dlopen (file, mode);
 

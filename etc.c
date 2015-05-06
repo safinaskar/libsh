@@ -530,7 +530,7 @@ sh_safe_fork (void)//@;
       sh_set_terminate (&sh_exit_failure);
     }
 
-    return result;
+  return result;
 }
 #endif //@
 

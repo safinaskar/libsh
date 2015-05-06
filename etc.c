@@ -607,7 +607,7 @@ sh_success (int status)//@;
 //@ /// * Чтобы можно было реализовать корректный netcat, который посылает FIN сразу же после EOF'а на stdin и закрывает stdout сразу же после FIN
 //@ /// * Если не закрывать сразу же, это может привести к deadlock'ам. Например:
 //@ ///     sh_multicat ({{0, 3, sh_rclose | sh_wclose}, {4, 1, sh_rclose | sh_wclose}}); // Псевдокод, предположим, что 3 и 4 - это концы одного пайпа
-//@ ///   Тогда, если не было бы sh_wclose, был бы deadlock
+//@ ///   Тогда, если бы не было sh_wclose, был бы deadlock
 //@ static const int sh_rclose     = 1 << 0;
 //@ static const int sh_wshutdownw = 1 << 1;
 //@ static const int sh_wclose     = 1 << 2;

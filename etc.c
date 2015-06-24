@@ -486,6 +486,65 @@ sh_umax2size_t (uintmax_t x)//@;
   _SH_CONV (0, SIZE_MAX, "sh_umax2size_t");
 }
 
+// Размер буфера для чтения и записи. 1 MiB, т. к. это быстрее, чем, скажем, 16 KiB, проверено на опыте. В то же время значения больше 1 MiB могут привести к появлению бага 12309 ядра Linux
+static const size_t rw_buf_size = 1024 * 1024;
+
+#if defined (SH_HAVE_read) //@
+#include <stdlib.h>
+
+size_t //@
+sh_read_all (int fildes, void **bufptr)//@;
+{
+  size_t result = 0;
+
+  *bufptr = sh_x_malloc (rw_buf_size);
+
+  SH_CTRY
+    {
+      for (;;)
+        {
+          size_t read_returned = (size_t)sh_x_read (fildes, *bufptr + result, rw_buf_size);
+
+          if (read_returned == 0)
+            {
+              break;
+            }
+
+          result += read_returned;
+
+          *bufptr = sh_x_realloc (*bufptr, result + rw_buf_size);
+        }
+    }
+  SH_CATCH
+    {
+      free (*bufptr);
+      *bufptr = NULL;
+      SH_THROW;
+    }
+  SH_CEND;
+
+  return result;
+}
+
+size_t //@
+sh_read_all_close (int fildes, void **bufptr)//@;
+{
+  size_t result;
+
+  SH_FTRY
+    {
+      result = sh_read_all (fildes, bufptr);
+    }
+  SH_FINALLY
+    {
+      sh_x_close (fildes);
+    }
+  SH_FEND;
+
+  return result;
+}
+#endif //@
+
 #if defined (SH_HAVE_write) //@
 //@ /// write вызывается как минимум один раз, поэтому делается проверка возможности чтения/записи
 void //@
@@ -735,11 +794,8 @@ sh_multicat (struct sh_multicat_t what[], int size)//@;
 
       SH_FTRY // p
         {
-          // 1 MiB, т. к. это быстрее, чем, скажем, 16 KiB, проверено на опыте. В то же время значения больше 1 MiB могут привести к появлению бага 12309 ядра Linux
-          const size_t buf_size = 1024 * 1024;
-
           // Делаем malloc, т. к. 1 MiB может не поместиться на стеке
-          char *buf = (char *) sh_x_malloc (buf_size);
+          char *buf = (char *) sh_x_malloc (rw_buf_size);
 
           SH_FTRY // buf
             {
@@ -778,7 +834,7 @@ sh_multicat (struct sh_multicat_t what[], int size)//@;
                       // Input: unfortunately, if there is no writers to pipe, then this is POLLHUP. So, we assume POLLHUP == POLLIN. For the same reason, just in case, we assume POLLERR and POLLNVAL are equal to POLLIN
                       if (p[2 * i].revents & POLLIN || p[2 * i].revents & POLLERR || p[2 * i].revents & POLLHUP || p[2 * i].revents & POLLNVAL)
                         {
-                          size_t got = sh_x_read (what[i].src, buf, buf_size);
+                          size_t got = sh_x_read (what[i].src, buf, rw_buf_size);
 
                           if (got == 0)
                             {

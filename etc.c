@@ -366,51 +366,6 @@ sh_xx_fread (void *SH_RESTRICT ptr, size_t size, size_t nitems, FILE *SH_RESTRIC
   return nitems;
 }
 
-#if defined (SH_HAVE_getdelim) //@
-size_t //@
-sh_easy_getdelim (char **SH_RESTRICT lineptr, size_t *SH_RESTRICT n, int delimiter, FILE *SH_RESTRICT stream)//@;
-{
-  ssize_t result = sh_x_getdelim (lineptr, n, delimiter, stream);
-
-  if (result == -1)
-    {
-      sh_throwx ("getdelim: end of file");
-    }
-
-  if ((unsigned char)((*lineptr)[result - 1]) == (unsigned char)delimiter)
-    {
-      (*lineptr)[result - 1] = '\0';
-      --result;
-    }
-
-  return (size_t)result;
-}
-
-//@ /// Будьте осторожны с '\0'-байтами внутри строк в sh_very_easy_getdelim и sh_very_easy_getline
-char * //@
-sh_very_easy_getdelim (int delimiter, FILE *stream)//@;
-{
-  char *line = NULL;
-  size_t n = 0;
-
-  sh_easy_getdelim (&line, &n, delimiter, stream);
-
-  return line;
-}
-
-size_t //@
-sh_easy_getline (char **SH_RESTRICT lineptr, size_t *SH_RESTRICT n, FILE *SH_RESTRICT stream)//@;
-{
-  return sh_easy_getdelim (lineptr, n, '\n', stream);
-}
-
-char * //@
-sh_very_easy_getline (FILE *stream)//@;
-{
-  return sh_very_easy_getdelim ('\n', stream);
-}
-#endif //@
-
 #include <ctype.h>
 
 #define _SH_XX_STRTO(str, func, type, args) \
@@ -549,6 +504,51 @@ sh_repeat_write (int fildes, const void *buf, size_t nbyte)//@;
 
       buf = (const char *) buf + written;
     }
+}
+#endif //@
+
+#if defined (SH_HAVE_getdelim) //@
+size_t //@
+sh_easy_getdelim (char **SH_RESTRICT lineptr, size_t *SH_RESTRICT n, int delimiter, FILE *SH_RESTRICT stream)//@;
+{
+  ssize_t result = sh_x_getdelim (lineptr, n, delimiter, stream);
+
+  if (result == -1)
+    {
+      sh_throwx ("getdelim: end of file");
+    }
+
+  if ((unsigned char)((*lineptr)[result - 1]) == (unsigned char)delimiter)
+    {
+      (*lineptr)[result - 1] = '\0';
+      --result;
+    }
+
+  return (size_t)result;
+}
+
+//@ /// Будьте осторожны с '\0'-байтами внутри строк в sh_very_easy_getdelim и sh_very_easy_getline
+char * //@
+sh_very_easy_getdelim (int delimiter, FILE *stream)//@;
+{
+  char *line = NULL;
+  size_t n = 0;
+
+  sh_easy_getdelim (&line, &n, delimiter, stream);
+
+  return line;
+}
+
+size_t //@
+sh_easy_getline (char **SH_RESTRICT lineptr, size_t *SH_RESTRICT n, FILE *SH_RESTRICT stream)//@;
+{
+  return sh_easy_getdelim (lineptr, n, '\n', stream);
+}
+
+char * //@
+sh_very_easy_getline (FILE *stream)//@;
+{
+  return sh_very_easy_getdelim ('\n', stream);
 }
 #endif //@
 

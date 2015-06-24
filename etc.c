@@ -567,6 +567,7 @@ sh_repeat_write (int fildes, const void *buf, size_t nbyte)//@;
 #endif //@
 
 #if defined (SH_HAVE_getdelim) //@
+/// libsh работает в основном с fd, но здесь (для семейства функций sh_easy_getdelim) я делаю исключение, т. к. иначе пришлось бы читать по одному символу
 size_t //@
 sh_easy_getdelim (char **SH_RESTRICT lineptr, size_t *SH_RESTRICT n, int delimiter, FILE *SH_RESTRICT stream)//@;
 {

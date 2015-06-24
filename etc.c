@@ -503,7 +503,7 @@ sh_read_all (int fildes, void **bufptr)//@;
     {
       for (;;)
         {
-          size_t read_returned = (size_t)sh_x_read (fildes, *bufptr + result, rw_buf_size);
+          size_t read_returned = (size_t)sh_x_read (fildes, (char *)*bufptr + result, rw_buf_size);
 
           if (read_returned == 0)
             {

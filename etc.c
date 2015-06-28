@@ -14,7 +14,7 @@
 //@ #include "funcs.h"
 //@
 
-// Чтобы быть уверенным, что, например, stdio.h объявит ssize_t, нужный для sh_easy_getdelim
+// Чтобы быть уверенным, что, например, stdio.h объявит ssize_t, нужный для sh_getdelim_no_delim
 #define _POSIX_C_SOURCE 200809L
 
 #include <errno.h>

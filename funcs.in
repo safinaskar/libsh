@@ -929,7 +929,7 @@ stddef.h           | string.h         | char *strndup (const char *s, size_t siz
   return result;
 }
 # SUCCESS strspn
-# DEFERRED strstr
+                   | string.h         | char *strstr(const char *s1, const char *s2)                                               | external | external | external # h, m
                    | stdlib.h, errno.h | double strtod (const char *SH_RESTRICT nptr, char **SH_RESTRICT endptr)                   | custom | value | custom # h, m
 {
   _SH_STRTO (double, strtod, (nptr, endptr));

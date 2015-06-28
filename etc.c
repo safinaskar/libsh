@@ -281,7 +281,7 @@ _sh_after_fcntl (int result)//@;
 //@ /// ---- xx without x ----
 
 #include <string.h>
-//@ /// x_memchr нет, есть HAVE, то же для strchr
+//@ /// x_memchr нет, есть HAVE, то же для strchr и strstr
 void * //@
 sh_xx_memchr (const void *s, int c, size_t n)//@;
 {
@@ -304,6 +304,20 @@ sh_xx_strchr (const char *s, int c)//@;
   if (result == NULL)
     {
       sh_throwx ("strchr: character not found");
+    }
+
+  return result;
+}
+
+#include <string.h>
+char * //@
+sh_xx_strstr (const char *s1 /* haystack */, const char *s2 /* needle */)//@;
+{
+  char *result = strstr (s1, s2);
+
+  if (result == NULL)
+    {
+      sh_throwx ("strstr: substring not found");
     }
 
   return result;

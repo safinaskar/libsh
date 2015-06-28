@@ -226,9 +226,9 @@ dlfcn.h            |                  | void *dlopen (const char *file, int mode
 # FLOAT erf, erff, erfl
 # FLOAT erfc, erfcf, erfcl
 # VAR environ
-                   | unistd.h         | int execl (const char *path, const char *arg0, ... /*, (char *)NULL */)                   | external | external | external # h, m
-                   | unistd.h         | int execle (const char *path, const char *arg0, ... /*, (char *)NULL, char *const envp[] */) | external | external | external # h, m
-                   | unistd.h         | int execlp (const char *file, const char *arg0, ... /*, (char *)NULL */)                  | external | external | external # h, m
+                   | unistd.h         | int execl (const char *path, const char *arg0, ... /*, (char *) NULL */)                  | external | external | external # h, m
+                   | unistd.h         | int execle (const char *path, const char *arg0, ... /*, (char *) NULL, char *const envp[] */) | external | external | external # h, m
+                   | unistd.h         | int execlp (const char *file, const char *arg0, ... /*, (char *) NULL */)                 | external | external | external # h, m
                    | unistd.h         | int execv (const char *path, char *const argv[])                                          | -1     | noreturn | "%s", path # h, m
                    | unistd.h         | int execve (const char *path, char *const argv[], char *const envp[])                     | -1     | noreturn | "%s", path # t, m
                    | unistd.h         | int execvp (const char *file, char *const argv[])                                         | -1     | noreturn | "%s", file # h, m

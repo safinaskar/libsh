@@ -503,7 +503,7 @@ sh_read_all (int fildes, void **bufptr)//@;
     {
       for (;;)
         {
-          size_t read_returned = (size_t)sh_x_read (fildes, (char *)*bufptr + result, rw_buf_size);
+          size_t read_returned = (size_t) sh_x_read (fildes, (char *) *bufptr + result, rw_buf_size);
 
           if (read_returned == 0)
             {
@@ -573,7 +573,7 @@ sh_getdelim_no_delim (char **SH_RESTRICT lineptr, size_t *SH_RESTRICT n, int del
 {
   sh_x_getdelim (lineptr, n, delimiter, stream);
 
-  if (result != -1 && (unsigned char)((*lineptr)[result - 1]) == (unsigned char)delimiter)
+  if (result != -1 && (unsigned char) ((*lineptr)[result - 1]) == (unsigned char) delimiter)
     {
       (*lineptr)[result - 1] = '\0';
       --result;

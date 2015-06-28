@@ -571,7 +571,7 @@ sh_repeat_write (int fildes, const void *buf, size_t nbyte)//@;
 ssize_t //@
 sh_getdelim_no_delim (char **SH_RESTRICT lineptr, size_t *SH_RESTRICT n, int delimiter, FILE *SH_RESTRICT stream)//@;
 {
-  sh_x_getdelim (lineptr, n, delimiter, stream);
+  ssize_t result = sh_x_getdelim (lineptr, n, delimiter, stream);
 
   if (result != -1 && (unsigned char) ((*lineptr)[result - 1]) == (unsigned char) delimiter)
     {

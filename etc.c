@@ -567,48 +567,46 @@ sh_repeat_write (int fildes, const void *buf, size_t nbyte)//@;
 #endif //@
 
 #if defined (SH_HAVE_getdelim) //@
-/// libsh работает в основном с fd, но здесь (для семейства функций sh_easy_getdelim) я делаю исключение, т. к. иначе пришлось бы читать по одному символу
-size_t //@
-sh_easy_getdelim (char **SH_RESTRICT lineptr, size_t *SH_RESTRICT n, int delimiter, FILE *SH_RESTRICT stream)//@;
+/// libsh работает в основном с fd, но здесь (для семейства функций sh_getdelim_no_delim) я делаю исключение, т. к. иначе пришлось бы читать по одному символу
+ssize_t //@
+sh_getdelim_no_delim (char **SH_RESTRICT lineptr, size_t *SH_RESTRICT n, int delimiter, FILE *SH_RESTRICT stream)//@;
 {
-  ssize_t result = sh_x_getdelim (lineptr, n, delimiter, stream);
+  sh_x_getdelim (lineptr, n, delimiter, stream);
 
-  if (result == -1)
-    {
-      sh_throwx ("getdelim: end of file");
-    }
-
-  if ((unsigned char)((*lineptr)[result - 1]) == (unsigned char)delimiter)
+  if (result != -1 && (unsigned char)((*lineptr)[result - 1]) == (unsigned char)delimiter)
     {
       (*lineptr)[result - 1] = '\0';
       --result;
     }
 
-  return (size_t)result;
+  return result;
 }
 
-//@ /// Будьте осторожны с '\0'-байтами внутри строк в sh_very_easy_getdelim и sh_very_easy_getline
+//@ /// Будьте осторожны с '\0'-байтами внутри строк в sh_getdelim_one_shot и sh_getline_one_shot
 char * //@
-sh_very_easy_getdelim (int delimiter, FILE *stream)//@;
+sh_getdelim_one_shot (int delimiter, FILE *stream)//@;
 {
   char *line = NULL;
   size_t n = 0;
 
-  sh_easy_getdelim (&line, &n, delimiter, stream);
+  if (sh_getdelim_no_delim (&line, &n, delimiter, stream) == -1)
+    {
+      sh_throwx ("getdelim: end of file");
+    }
 
   return line;
 }
 
-size_t //@
-sh_easy_getline (char **SH_RESTRICT lineptr, size_t *SH_RESTRICT n, FILE *SH_RESTRICT stream)//@;
+ssize_t //@
+sh_getline_no_delim (char **SH_RESTRICT lineptr, size_t *SH_RESTRICT n, FILE *SH_RESTRICT stream)//@;
 {
-  return sh_easy_getdelim (lineptr, n, '\n', stream);
+  return sh_getdelim_no_delim (lineptr, n, '\n', stream);
 }
 
 char * //@
-sh_very_easy_getline (FILE *stream)//@;
+sh_getline_one_shot (FILE *stream)//@;
 {
-  return sh_very_easy_getdelim ('\n', stream);
+  return sh_getdelim_one_shot ('\n', stream);
 }
 #endif //@
 

@@ -326,7 +326,7 @@ sh_xx_strstr (const char *s1 /* haystack */, const char *s2 /* needle */)//@;
   return result;
 }
 
-#if SH_HAVE_strcasestr
+#if defined (SH_HAVE_strcasestr)
 #include <string.h>
 char * //@
 sh_xx_strcasestr (const char *haystack, const char *needle)//@;

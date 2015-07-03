@@ -17,6 +17,9 @@
 // Чтобы быть уверенным, что, например, stdio.h объявит ssize_t, нужный для sh_getdelim_no_delim
 #define _POSIX_C_SOURCE 200809L
 
+// Для strcasestr
+#define _GNU_SOURCE 1
+
 #include <errno.h>
 
 #include "etc.h"
@@ -281,7 +284,7 @@ _sh_after_fcntl (int result)//@;
 //@ /// ---- xx without x ----
 
 #include <string.h>
-//@ /// x_memchr нет, есть HAVE, то же для strchr и strstr
+//@ /// x_memchr нет, есть HAVE, то же для strchr, strstr, strcasestr
 void * //@
 sh_xx_memchr (const void *s, int c, size_t n)//@;
 {
@@ -322,6 +325,22 @@ sh_xx_strstr (const char *s1 /* haystack */, const char *s2 /* needle */)//@;
 
   return result;
 }
+
+#if SH_HAVE_strcasestr
+#include <string.h>
+char * //@
+sh_xx_strcasestr (const char *haystack, const char *needle)//@;
+{
+  char *result = strcasestr (haystack, needle);
+
+  if (result == NULL)
+    {
+      sh_throwx ("strcasestr: substring not found");
+    }
+
+  return result;
+}
+#endif
 
 //@ /// ---- xx ----
 

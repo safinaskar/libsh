@@ -876,6 +876,7 @@ signal.h           |                  | int sigfillset (sigset_t *set)          
 # FLOAT sqrt, sqrtf, sqrtl
 # VAR stderr, stdin, stdout
 # DEFERRED strcasecmp, strcasecmp_l, strncasecmp, strncasecmp_l
+                   | string.h         | char *strcasestr (const char *haystack, const char *needle)                               | external | external | external # h, m, docs: not in POSIX, info taken from Linux man-pages
 # SUCCESS strcat
                    | string.h         | char *strchr (const char *s, int c)                                                       | external | external | external # h, m
 # SUCCESS strcmp
@@ -884,7 +885,7 @@ signal.h           |                  | int sigfillset (sigset_t *set)          
 # SUCCESS strcspn
                    | string.h         | char *strdup (const char *s)                                                              | NULL   | value | # h
 stddef.h           | string.h         | char *strndup (const char *s, size_t size)                                                | NULL   | value | # h
-                   | string.h, errno.h | char *strerror (int errnum)                                                               | custom | value | custom # h, m, docs: может вообще не падать, если реализация не ставит errno
+                   | string.h, errno.h | char *strerror (int errnum)                                                              | custom | value | custom # h, m, docs: может вообще не падать, если реализация не ставит errno
 {
   int saved_errno = errno;
 

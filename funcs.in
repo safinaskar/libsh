@@ -873,6 +873,7 @@ signal.h           |                  | int sigfillset (sigset_t *set)          
 # DEFERRED sockatmark
                    | sys/socket.h     | int socket (int domain, int type, int protocol)                                           | -1     | value | # h
 # DEFERRED socketpair
+fcntl.h, sys/types.h |                | ssize_t splice (int fd_in, loff_t *off_in, int fd_out, loff_t *off_out, size_t len, unsigned int flags) | -1 | value | # h, m, docs: not in POSIX, info taken from Linux man-pages, splice and sendfile man pages have issues: bugzilla.kernel.org/show_bug.cgi?id=86001 , https://bugzilla.kernel.org/show_bug.cgi?id=90911
 # FLOAT sqrt, sqrtf, sqrtl
 # VAR stderr, stdin, stdout
 # DEFERRED strcasecmp, strcasecmp_l, strncasecmp, strncasecmp_l

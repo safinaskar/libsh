@@ -525,6 +525,7 @@ static const size_t rw_buf_size = 1024 * 1024;
 #if defined (SH_HAVE_read) //@
 #include <stdlib.h>
 
+// SOMEDAY: возможно, выделять память по-другому, например, увеличивая её экспоненциально
 size_t //@
 sh_read_all (int fildes, void **bufptr)//@;
 {
@@ -615,7 +616,7 @@ sh_getdelim_no_delim (char **SH_RESTRICT lineptr, size_t *SH_RESTRICT n, int del
   return result;
 }
 
-//@ /// Будьте осторожны с '\0'-байтами внутри строк в sh_getdelim_one_shot и sh_getline_one_shot
+//@ /// Будьте осторожны с '\0'-байтами внутри строк в sh_getdelim_one_shot, sh_getdelim_fclose, sh_getline_one_shot и sh_getline_fclose
 char * //@
 sh_getdelim_one_shot (int delimiter, FILE *stream)//@;
 {
@@ -630,6 +631,24 @@ sh_getdelim_one_shot (int delimiter, FILE *stream)//@;
   return line;
 }
 
+char * //@
+sh_getdelim_fclose (int delimiter, FILE *stream)//@;
+{
+  char *result;
+
+  SH_FTRY
+    {
+      result = sh_getdelim_one_shot (delimiter, stream);
+    }
+  SH_FINALLY
+    {
+      sh_x_fclose (stream);
+    }
+  SH_FEND;
+
+  return result;
+}
+
 ssize_t //@
 sh_getline_no_delim (char **SH_RESTRICT lineptr, size_t *SH_RESTRICT n, FILE *SH_RESTRICT stream)//@;
 {
@@ -640,6 +659,12 @@ char * //@
 sh_getline_one_shot (FILE *stream)//@;
 {
   return sh_getdelim_one_shot ('\n', stream);
+}
+
+char * //@
+sh_getline_fclose (FILE *stream)//@;
+{
+  return sh_getdelim_fclose ('\n', stream);
 }
 #endif //@
 

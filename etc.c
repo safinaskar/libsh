@@ -1135,6 +1135,52 @@ sh_tcp_accept_close (int listen_fd)//@;
 }
 #endif //@
 
+#include <curl/curl.h> //@
+
+void //@
+sh_curl (CURL *handle, const char *uri, FILE *fout)//@;
+{
+  curl_easy_setopt (handle, CURLOPT_URL, uri);
+  curl_easy_setopt (handle, CURLOPT_WRITEFUNCTION, NULL);
+  curl_easy_setopt (handle, CURLOPT_WRITEDATA, (void *) fout);
+
+  {
+    CURLcode errornum = curl_easy_perform (handle);
+
+    if (errornum != CURLE_OK)
+      {
+        sh_throwx ("sh_curl: %s", curl_easy_strerror (errornum));
+      }
+  }
+
+  {
+    long response_code;
+
+    curl_easy_getinfo (handle, CURLINFO_RESPONSE_CODE, &response_code);
+
+    if (response_code != 200)
+      {
+        sh_throwx ("sh_curl: response code is %ld (200 expected)", response_code);
+      }
+  }
+}
+
+void //@
+sh_curl_to_file (CURL *handle, const char *uri, const char *file_name)//@;
+{
+  FILE *fout = sh_x_fopen (file_name, "w");
+
+  SH_FTRY
+    {
+      sh_curl (handle, uri, fout);
+    }
+  SH_FINALLY
+    {
+      sh_x_fclose (fout);
+    }
+  SH_FEND;
+}
+
 //@
 //@ #ifdef __cplusplus
 //@ }

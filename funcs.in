@@ -59,6 +59,10 @@ fcntl.h            | unistd.h         | int faccessat (int fd, const char *path,
 # OB asctime, asctime_r
 # FLOAT asin, asinf, asinl
 # FLOAT asinh, asinhf, asinhl
+                   | stdio.h          | int asprintf (char **strp, const char *fmt, ...)                                          | custom | value | custom # h, m, docs: not in POSIX, info taken from Linux man-pages
+{
+  _SH_V (fmt, int, sh_x_vasprintf (strp, fmt, ap));
+}
 # SUCCESS assert
 # FLOAT atan, atanf, atanl
 # FLOAT atan2, atan2f, atan2l
@@ -1041,6 +1045,7 @@ time.h             |                  | time_t time (time_t *tloc)              
 # DEFERRED uselocale
 # DEFERRED utime
 # SUCCESS va_arg, va_copy, va_end, va_start
+stdarg.h           | stdio.h          | int vasprintf (char **strp, const char *fmt, va_list ap)                                  | -1     | value | # h, m, docs: not in POSIX, info taken from Linux man-pages
 stdarg.h           | stdio.h          | int vdprintf (int fildes, const char *SH_RESTRICT format, va_list ap)                     | < 0    | value | # h, m
 stdio.h            |                  | int vfprintf (FILE *SH_RESTRICT stream, const char *SH_RESTRICT format, va_list ap)       | < 0    | value | # h, m
 stdarg.h           | stdio.h          | int vprintf (const char *SH_RESTRICT format, va_list ap)                                  | < 0    | value | # h, m

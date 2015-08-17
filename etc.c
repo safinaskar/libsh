@@ -1138,25 +1138,27 @@ sh_tcp_accept_close (int listen_fd)//@;
 #include <curl/curl.h> //@
 
 void //@
+sh_curl_wrapper (CURLcode errornum)//@;
+{
+  if (errornum != CURLE_OK)
+    {
+      sh_throwx ("libcurl: %s", curl_easy_strerror (errornum));
+    }
+}
+
+void //@
 sh_curl (CURL *handle, const char *uri, FILE *fout)//@;
 {
-  curl_easy_setopt (handle, CURLOPT_URL, uri);
-  curl_easy_setopt (handle, CURLOPT_WRITEFUNCTION, NULL);
-  curl_easy_setopt (handle, CURLOPT_WRITEDATA, (void *) fout);
+  sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_URL, uri));
+  sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_WRITEFUNCTION, NULL));
+  sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_WRITEDATA, (void *) fout));
 
-  {
-    CURLcode errornum = curl_easy_perform (handle);
-
-    if (errornum != CURLE_OK)
-      {
-        sh_throwx ("sh_curl: %s", curl_easy_strerror (errornum));
-      }
-  }
+  sh_curl_wrapper (curl_easy_perform (handle));
 
   {
     long response_code;
 
-    curl_easy_getinfo (handle, CURLINFO_RESPONSE_CODE, &response_code);
+    sh_curl_wrapper (curl_easy_getinfo (handle, CURLINFO_RESPONSE_CODE, &response_code));
 
     if (response_code != 200)
       {

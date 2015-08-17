@@ -175,6 +175,17 @@ sys/types.h        | fcntl.h          | int creat (const char *path, mode_t mode
 # FLOAT ctanh, ctanhf, ctanhl
 # DEFERRED ctermid
 # OB ctime, ctime_r
+curl/curl.h        |                  | CURL *curl_easy_init (void)                                                               | custom | value | custom # h, m, not in POSIX
+{
+  CURL *result = curl_easy_init ();
+
+  if (result == NULL)
+    {
+      sh_throwx ("curl_easy_init failed");
+    }
+
+  return result;
+}
 # VAR daylight
 # DEFERRED dbm_clearerr, dbm_close, dbm_delete, dbm_error, dbm_fetch, dbm_firstkey, dbm_nextkey, dbm_open, dbm_store
 # DEFERRED difftime

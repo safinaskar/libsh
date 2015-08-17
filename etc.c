@@ -1299,6 +1299,34 @@ sh_spawnvp (struct sh_redir redirs[], struct sh_pipe pipes[], const char *comman
 }
 #endif //@
 
+#if defined (SH_HAVE_stat) //@
+#include <sys/stat.h>
+
+sh_bool //@
+sh_test_d (const char *file)//@;
+{
+  struct stat buf;
+
+  if (stat (file, &buf) == -1)
+    {
+      return sh_false;
+    }
+
+  return buf.st_mode & S_IFDIR;
+}
+#endif //@
+
+#if defined (SH_HAVE_stat) && defined (SH_HAVE_mkdir) //@
+void //@
+sh_force_mkdir (const char *file, mode_t mode)//@;
+{
+  if (!sh_test_d (file))
+    {
+      sh_x_mkdir (file, mode);
+    }
+}
+#endif //@
+
 //@
 //@ #ifdef __cplusplus
 //@ }

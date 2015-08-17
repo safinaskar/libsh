@@ -144,7 +144,7 @@
 //@ #define SH_RESTRICT // Nothing
 //@ #endif
 //@
-//@ /// sh_bool может быть ABI-несовместим с C _Bool и C++ bool (а они могут быть ABI-несовместимы друг с другом), но C sh_bool ABI-совместим с C++ sh_bool, потому что это просто enum
+//@ /// sh_bool может быть ABI-несовместим с C _Bool и C++ bool (а они могут быть ABI-несовместимы друг с другом), но C sh_bool ABI-совместим с C++ sh_bool, потому что это просто enum. Любое отличное от нуля значение означает sh_true
 //@ typedef enum {sh_false = 0, sh_true = 1} sh_bool;
 //@
 //@ #ifdef SH_HAVE_sigsetjmp

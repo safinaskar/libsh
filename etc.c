@@ -1168,10 +1168,8 @@ sh_curl (CURL *handle, const char *uri, FILE *fout)//@;
 }
 
 void //@
-sh_curl_to_file (CURL *handle, const char *uri, const char *file_name)//@;
+sh_curl_fclose (CURL *handle, const char *uri, FILE *fout)//@;
 {
-  FILE *fout = sh_x_fopen (file_name, "w");
-
   SH_FTRY
     {
       sh_curl (handle, uri, fout);
@@ -1182,6 +1180,124 @@ sh_curl_to_file (CURL *handle, const char *uri, const char *file_name)//@;
     }
   SH_FEND;
 }
+
+#if defined (SH_HAVE_pipe) && defined (SH_HAVE_fork) && defined (SH_HAVE_dup2) && defined (SH_HAVE_close) //@
+//@ struct sh_redir
+//@ {
+//@   int parent;
+//@   int child;
+//@ };
+
+//@ enum sh_pipe_direction {sh_to_child = 0, sh_from_child};
+
+//@ struct sh_pipe
+//@ {
+//@   enum sh_pipe_direction direction;
+//@   int *parent;
+//@   int child;
+//@   int _internal_pipe[2];
+//@ };
+
+// SOMEDAY: сделать функцию exception-safe
+pid_t //@
+sh_fork_redir (struct sh_redir redirs[], struct sh_pipe pipes[])//@;
+{
+  struct sh_redir no_redirs[] = {{-1}};
+  struct sh_pipe no_pipes[] = {{0}};
+
+  if (redirs == NULL)
+    {
+      redirs = no_redirs;
+    }
+
+  if (pipes == NULL)
+    {
+      pipes = no_pipes;
+    }
+
+  for (int i = 0; pipes[i].parent != NULL; ++i)
+    {
+      sh_x_pipe (pipes[i]._internal_pipe);
+    }
+
+  pid_t result = sh_safe_fork ();
+
+  if (result == 0)
+    {
+      for (int i = 0; redirs[i].parent != -1; ++i)
+        {
+          sh_x_dup2 (redirs[i].parent, redirs[i].child);
+          sh_x_close (redirs[i].parent);
+        }
+
+      for (int i = 0; pipes[i].parent != NULL; ++i)
+        {
+          if (pipes[i].direction == sh_to_child)
+            {
+              sh_x_dup2 (pipes[i]._internal_pipe[0], pipes[i].child);
+            }
+          else
+            {
+              sh_x_dup2 (pipes[i]._internal_pipe[1], pipes[i].child);
+            }
+
+          sh_x_close (pipes[i]._internal_pipe[0]);
+          sh_x_close (pipes[i]._internal_pipe[1]);
+        }
+    }
+  else
+    {
+      for (int i = 0; redirs[i].parent != -1; ++i)
+        {
+          sh_x_close (redirs[i].parent);
+        }
+
+      for (int i = 0; pipes[i].parent != NULL; ++i)
+        {
+          if (pipes[i].direction == sh_to_child)
+            {
+              sh_x_close (pipes[i]._internal_pipe[0]);
+              *(pipes[i].parent) = pipes[i]._internal_pipe[1];
+            }
+          else
+            {
+              sh_x_close (pipes[i]._internal_pipe[1]);
+              *(pipes[i].parent) = pipes[i]._internal_pipe[0];
+            }
+        }
+    }
+
+  return result;
+}
+#endif //@
+
+#if defined (SH_HAVE_pipe) && defined (SH_HAVE_fork) && defined (SH_HAVE_dup2) && defined (SH_HAVE_close) && defined (SH_HAVE_execve) && defined (SH_HAVE_execvp) //@
+pid_t //@
+sh_spawnve (struct sh_redir redirs[], struct sh_pipe pipes[], const char *path, char *const argv[], char *const envp[])//@;
+{
+  pid_t result = sh_fork_redir (redirs, pipes);
+
+  if (result == 0)
+    {
+      sh_x_execve (path, argv, envp);
+    }
+
+  return result;
+}
+
+pid_t //@
+sh_spawnvp (struct sh_redir redirs[], struct sh_pipe pipes[], const char *command, char *const argv[])//@;
+{
+  pid_t result = sh_fork_redir (redirs, pipes);
+
+  if (result == 0)
+    {
+      sh_x_execvp (command, argv);
+    }
+
+  return result;
+}
+#endif //@
 
 //@
 //@ #ifdef __cplusplus

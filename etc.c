@@ -1146,14 +1146,50 @@ sh_curl_wrapper (CURLcode errornum)//@;
     }
 }
 
+#if defined (SH_HAVE_isatty) && defined (SH_HAVE_fileno) //@
+#include <unistd.h>
+
+static int
+progress_callback (void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
+{
+  if (sh_get_err () != NULL && isatty (sh_x_fileno (sh_get_err ())))
+    {
+      if (dltotal == 0)
+        {
+          sh_x_fprintf (sh_get_err (), "\b\b\b\b    \b\b\b\b?%%");
+        }
+      else
+        {
+          sh_x_fprintf (sh_get_err (), "\b\b\b\b    \b\b\b\b%d%%", (int) floor (dlnow * 100. / dltotal));
+        }
+
+      sh_x_fflush (sh_get_err ());
+    }
+
+  return 0;
+}
+
 void //@
 sh_curl (CURL *handle, const char *uri, FILE *fout)//@;
 {
+  if (sh_get_err () != NULL && isatty (sh_x_fileno (sh_get_err ())))
+    {
+      sh_x_fprintf (sh_get_err (), "Downloading %s\n", uri);
+    }
+
   sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_URL, uri));
   sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_WRITEFUNCTION, NULL));
   sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_WRITEDATA, (void *) fout));
+  sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_NOPROGRESS, 0L));
+  sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_XFERINFOFUNCTION, &progress_callback));
 
   sh_curl_wrapper (curl_easy_perform (handle));
+
+  if (sh_get_err () != NULL && isatty (sh_x_fileno (sh_get_err ())))
+    {
+      sh_x_fprintf (sh_get_err (), "\b\b\b\b    \b\b\b\b");
+      sh_x_fflush (sh_get_err ());
+    }
 
   {
     long response_code;
@@ -1180,6 +1216,7 @@ sh_curl_fclose (CURL *handle, const char *uri, FILE *fout)//@;
     }
   SH_FEND;
 }
+#endif //@
 
 #if defined (SH_HAVE_pipe) && defined (SH_HAVE_fork) && defined (SH_HAVE_dup2) && defined (SH_HAVE_close) //@
 //@ struct sh_redir

@@ -1200,7 +1200,7 @@ sh_curl_fclose (CURL *handle, const char *uri, FILE *fout)//@;
 
 // SOMEDAY: сделать функцию exception-safe
 pid_t //@
-sh_fork_redir (struct sh_redir redirs[], struct sh_pipe pipes[])//@;
+sh_fork_redir (const struct sh_redir redirs[], struct sh_pipe pipes[])//@;
 {
   struct sh_redir no_redirs[] = {{-1}};
   struct sh_pipe no_pipes[] = {{0}};

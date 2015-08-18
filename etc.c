@@ -1200,7 +1200,7 @@ sh_curl_fclose (CURL *handle, const char *uri, FILE *fout)//@;
 
 // SOMEDAY: сделать функцию exception-safe
 pid_t //@
-sh_fork_redir (const struct sh_redir redirs[], struct sh_pipe pipes[])//@;
+sh_fork_redirs (const struct sh_redir redirs[], struct sh_pipe pipes[])//@;
 {
   struct sh_redir no_redirs[] = {{-1}};
   struct sh_pipe no_pipes[] = {{0}};
@@ -1275,7 +1275,7 @@ sh_fork_redir (const struct sh_redir redirs[], struct sh_pipe pipes[])//@;
 pid_t //@
 sh_spawnve (struct sh_redir redirs[], struct sh_pipe pipes[], const char *path, char *const argv[], char *const envp[])//@;
 {
-  pid_t result = sh_fork_redir (redirs, pipes);
+  pid_t result = sh_fork_redirs (redirs, pipes);
 
   if (result == 0)
     {
@@ -1288,7 +1288,7 @@ sh_spawnve (struct sh_redir redirs[], struct sh_pipe pipes[], const char *path, 
 pid_t //@
 sh_spawnvp (struct sh_redir redirs[], struct sh_pipe pipes[], const char *command, char *const argv[])//@;
 {
-  pid_t result = sh_fork_redir (redirs, pipes);
+  pid_t result = sh_fork_redirs (redirs, pipes);
 
   if (result == 0)
     {

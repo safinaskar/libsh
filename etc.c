@@ -827,7 +827,7 @@ multicat_done (const struct sh_multicat_t *what)
 }
 
 //@ /// Это НЕ параллельный cat, т. к. всё происходит в одном потоке и синхронно (но с мультиплексированием I/O)
-//@ /// sh_multicat modifies 'what'
+//@ /// sh_multicat modifies "what"
 //@ /// size >= 0
 //@ /// Любые fd могут быть одинаковыми с оговоркой: после закрывания fd его нельзя использовать, т. е. нельзя {{3, 3, sh_rclose | sh_wclose}}, нельзя {{3, 4, sh_rclose}, {3, 5, 0}}
 //@ /// sh_multicat нужен в том числе для правильной реализации "cat file - | prog"
@@ -1026,7 +1026,7 @@ sh_tcp_connect (const char *host, const char *protocol, int family)//@;
 
   sh_x_getaddrinfo (host, protocol, &hints, &res);
 
-  // POSIX 2013 says that now 'res' list contains at least one item
+  // POSIX 2013 says that now "res" list contains at least one item
 
   int result;
 

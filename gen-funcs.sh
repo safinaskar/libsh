@@ -76,7 +76,7 @@ sed 's/#.*$//' | while read -r LINE; do
 	fi
 
 	if [ "$ON_ERROR" != external ] && [ "$ON_ERROR" != custom ] && grep '\.\.\.' <<< "$DECLARATION" > /dev/null; then
-		echo "${0##*/}: not external and not custom and '...'" >&2
+		echo "${0##*/}: not external and not custom and \"...\"" >&2
 		exit 1
 	fi
 

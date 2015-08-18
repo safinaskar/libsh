@@ -161,7 +161,7 @@ sh_arg_parse (char ***argvp, const std::string &header, const std::string &foote
 {
 #define _SH_ARG_ALL_OPTS help, opts...
 
-  // Unfortunately, I cannot do 'auto standard_opts = make_tuple (... [&standard_opts, ...](...){...} ...)'
+  // Unfortunately, I cannot do "auto standard_opts = make_tuple (... [&standard_opts, ...](...){...} ...)"
 
   const auto help = sh_arg_make_opt ({}, {"help"}, sh_arg_optional, [header, footer, opts...](const char *)
     {
@@ -221,7 +221,7 @@ sh_arg_parse (char ***argvp, const std::string &header, const std::string &foote
                                 {
                                   if (argvp[0][1] == NULL)
                                     {
-                                      sh_throwx ("option '--%s' requires an argument\nTry '%s --help' for more information.", i, sh_get_program ());
+                                      sh_throwx ("option \"--%s\" requires an argument\nTry \"%s --help\" for more information.", i, sh_get_program ());
                                     }
                                   else
                                     {
@@ -242,7 +242,7 @@ sh_arg_parse (char ***argvp, const std::string &header, const std::string &foote
                         {
                           if (o.param_name == NULL)
                             {
-                              sh_throwx ("option '--%s' doesn't allow an argument\nTry '%s --help' for more information.", i, sh_get_program ());
+                              sh_throwx ("option \"--%s\" doesn't allow an argument\nTry \"%s --help\" for more information.", i, sh_get_program ());
                             }
                           else
                             {
@@ -259,7 +259,7 @@ sh_arg_parse (char ***argvp, const std::string &header, const std::string &foote
             },
             _SH_ARG_ALL_OPTS))
             {
-              sh_throwx ("unrecognized option '%s'\nTry '%s --help' for more information.", argvp[0][0], sh_get_program ());
+              sh_throwx ("unrecognized option \"%s\"\nTry \"%s --help\" for more information.", argvp[0][0], sh_get_program ());
             }
         }
       else
@@ -285,7 +285,7 @@ sh_arg_parse (char ***argvp, const std::string &header, const std::string &foote
                                     {
                                       if (argvp[0][1] == NULL)
                                         {
-                                          sh_throwx ("option '-%c' requires an argument\nTry '%s --help' for more information.", j, sh_get_program ());
+                                          sh_throwx ("option \"-%c\" requires an argument\nTry \"%s --help\" for more information.", j, sh_get_program ());
                                         }
                                       else
                                         {
@@ -324,7 +324,7 @@ sh_arg_parse (char ***argvp, const std::string &header, const std::string &foote
                 },
                 _SH_ARG_ALL_OPTS))
                 {
-                  sh_throwx ("unrecognized option '-%c'\nTry '%s --help' for more information.", i[0], sh_get_program ());
+                  sh_throwx ("unrecognized option \"-%c\"\nTry \"%s --help\" for more information.", i[0], sh_get_program ());
                 }
             }
 
@@ -340,7 +340,7 @@ sh_arg_operand (char ***argvp)
 {
   if (argvp[0][0] == NULL)
     {
-      sh_throwx ("missing an operand\nTry '%s --help' for more information.", sh_get_program ());
+      sh_throwx ("missing an operand\nTry \"%s --help\" for more information.", sh_get_program ());
     }
 
   char *result = argvp[0][0];
@@ -355,7 +355,7 @@ sh_arg_end (char *const *argv)
 {
   if (argv[0] != NULL)
     {
-      sh_throwx ("extra operand: %s\nTry '%s --help' for more information.", argv[0], sh_get_program ());
+      sh_throwx ("extra operand: %s\nTry \"%s --help\" for more information.", argv[0], sh_get_program ());
     }
 }
 

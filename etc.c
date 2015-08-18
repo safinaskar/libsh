@@ -1160,7 +1160,7 @@ progress_callback (void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off
         }
       else
         {
-          sh_x_fprintf (sh_get_err (), "\b\b\b\b    \b\b\b\b%d%%", (int) floor (dlnow * 100. / dltotal));
+          sh_x_fprintf (sh_get_err (), "\b\b\b\b    \b\b\b\b%d%%", (int) (dlnow * 100. / dltotal));
         }
 
       sh_x_fflush (sh_get_err ());

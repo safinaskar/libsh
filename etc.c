@@ -1172,7 +1172,7 @@ progress_callback (void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off
 void //@
 sh_curl (CURL *handle, const char *uri, FILE *fout)//@;
 {
-  if (sh_get_err () != NULL && isatty (sh_x_fileno (sh_get_err ())))
+  if (sh_get_err () != NULL)
     {
       sh_x_fprintf (sh_get_err (), "Downloading %s\n", uri);
     }

@@ -987,6 +987,8 @@ sh_cat (int src, int dst, int flags)//@;
 }
 #endif //@
 
+//@ /// Если на localhost'е делать полные циклы connect-send-close, то эти циклы могут прийти в другом порядке. Это полностью удовлетворяет стандартам. См. обсуждение на lkml: http://thread.gmane.org/gmane.linux.kernel/1879830 (ответ от Alan Cox). Возможно, если при закрывании сокета дожидаться его реального закрывания, то всё будет нормально
+
 #if defined (SH_HAVE_socket) && defined (SH_HAVE_connect) && defined (SH_HAVE_close) && defined (SH_HAVE_getaddrinfo) //@
 #include <sys/socket.h>
 #include <unistd.h>

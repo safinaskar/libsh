@@ -756,7 +756,6 @@ sh_success (int status)//@;
 
 //@ struct sh_multicat_t
 //@ {
-//@ public:
 //@   int src;
 //@   int dst;
 //@   int flags;
@@ -1224,7 +1223,6 @@ sh_curl_fclose (CURL *handle, const char *uri, FILE *fout)//@;
 #if defined (SH_HAVE_pipe) && defined (SH_HAVE_fork) && defined (SH_HAVE_dup2) && defined (SH_HAVE_close) //@
 //@ struct sh_redir
 //@ {
-//@ public:
 //@   int parent;
 //@   int child;
 //@ };
@@ -1233,7 +1231,6 @@ sh_curl_fclose (CURL *handle, const char *uri, FILE *fout)//@;
 
 //@ struct sh_pipe
 //@ {
-//@ public:
 //@   enum sh_pipe_direction direction;
 //@   int *parent;
 //@   int child;

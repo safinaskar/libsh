@@ -402,6 +402,7 @@ sh_vwarnx (const char *format, va_list ap)//@;
           fprintf (sh_get_err (), "\n");
         }
 
+      // POSIX гарантирует, что stderr не является fully buffered. Тем не менее мы fflush'им _err здесь и в других подобных местах, т. к. _err не обязательно stderr
       fflush (sh_get_err ());
     }
 }

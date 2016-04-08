@@ -580,7 +580,7 @@ sh_read_all_close (int fildes, void **bufptr)//@;
 #endif //@
 
 #if defined (SH_HAVE_write) //@
-//@ /// write вызывается как минимум один раз, поэтому делается проверка возможности чтения/записи
+//@ /// write вызывается как минимум один раз, поэтому делается проверка возможности записи. SOMEDAY: может, изменить это?
 void //@
 sh_repeat_write (int fildes, const void *buf, size_t nbyte)//@;
 {
@@ -596,6 +596,57 @@ sh_repeat_write (int fildes, const void *buf, size_t nbyte)//@;
         }
 
       buf = (const char *) buf + written;
+    }
+}
+#endif //@
+
+#if defined (SH_HAVE_read) //@
+//@ /// Если nbyte равен нулю, то read не вызывается ни разу, поэтому не производится проверка возможности чтения. То же для sh_x_repeat_read и sh_xx_repeat_read
+size_t //@
+sh_repeat_read (int fildes, void *buf, size_t nbyte)//@;
+{
+  size_t result = 0;
+
+  while (result != nbyte)
+    {
+      size_t have_read = (size_t) sh_x_read (fildes, (char *)buf + result, nbyte - result);
+
+      if (have_read == 0)
+        {
+          return result;
+        }
+
+      result += have_read;
+    }
+
+  return nbyte;
+}
+
+//@ /// Если nbyte равен нулю, то возвращает sh_true
+sh_bool //@
+sh_x_repeat_read (int fildes, void *buf, size_t nbyte)//@;
+{
+  size_t have_read = sh_repeat_read (fildes, buf, nbyte);
+
+  if (have_read == nbyte)
+    {
+      return sh_true;
+    }
+
+  if (have_read == 0)
+    {
+      return sh_false;
+    }
+
+  sh_throwx ("read: data is read partially");
+}
+
+void //@
+sh_xx_repeat_read (int fildes, void *buf, size_t nbyte)//@;
+{
+  if (!sh_x_repeat_read (fildes, buf, nbyte))
+    {
+      sh_throwx ("read: end of file");
     }
 }
 #endif //@

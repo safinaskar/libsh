@@ -495,7 +495,7 @@ sys/types.h        | unistd.h         | pid_t getsid (pid_t pid)                
 # DEFERRED getsockname
 # DEFERRED getsockopt
 # DEFERRED getsubopt
-# DEFERRED gettimeofday
+# DEFERRED gettimeofday (POSIX 2013 edition помечает функцию как устаревшую, но я, возможно, всё равно сделаю для неё обёртку, т. к. функция распространена)
 # SUCCESS getuid
 # DEFERRED getwc
 # DEFERRED getwchar

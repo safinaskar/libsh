@@ -157,7 +157,8 @@ time.h             |                  | clock_t clock (void)                    
   return result;
 }
 # DEFERRED clock_getcpuclockid
-# DEFERRED clock_getres, clock_gettime, clock_settime
+# DEFERRED clock_getres, clock_settime
+time.h             |                  | int clock_gettime (clockid_t clock_id, struct timespec *tp)                               | -1     | void  | # h, m
 time.h             |                  | int clock_nanosleep (clockid_t clock_id, int flags, const struct timespec *rqtp, struct timespec *rmtp) | external | external | external # h, m
 # FLOAT clog, clogf, clogl
                    | unistd.h         | int close (int fildes)                                                                    | -1     | void  | # t, m, docs: close нельзя restart'ить on EINTR, см. коммент в close_nointr в src/shared/util.c в systemd

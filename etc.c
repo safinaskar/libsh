@@ -494,6 +494,19 @@ sh_xx_strtoull (const char *str, int base)//@;
 }
 #endif //@
 
+#if defined (SH_HAVE_clock_gettime) //@
+#include <stdint.h> // SOMEDAY: предполагаем, что если есть clock_gettime, то есть и <stdint.h>
+#include <time.h>
+
+int64_t // SOMEDAY: правильно ли выбран тип? //@
+sh_xx_clock_gettime (clockid_t clock_id)//@;
+{
+  struct timespec tp;
+  sh_x_clock_gettime (clock_id, &tp);
+  return (int64_t)tp.tv_sec * 1000000000 + (int64_t)tp.tv_nsec;
+}
+#endif //@
+
 //@ /// ---- Высокоуровневые функции ----
 
 #define _SH_CONV(min, max, func) \

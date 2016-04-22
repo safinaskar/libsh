@@ -275,8 +275,7 @@ sh_set_terminate (sh_terminate_t terminate)//@;
 //@
 //@ #define SH_CATCH \
 //@           else \
-//@             { \
-//@             } \
+//@             ; \
 //@           _sh_buf = _sh_saved; \
 //@         } \
 //@       else \
@@ -286,8 +285,7 @@ sh_set_terminate (sh_terminate_t terminate)//@;
 //@
 //@ #define SH_CEND \
 //@           else \
-//@             { \
-//@             } \
+//@             ; \
 //@         } \
 //@     } \
 //@   while (0)
@@ -302,8 +300,7 @@ sh_set_terminate (sh_terminate_t terminate)//@;
 //@
 //@ #define SH_FINALLY \
 //@           else \
-//@             { \
-//@             } \
+//@             ; \
 //@           _sh_thrown = sh_false; \
 //@         } \
 //@       SH_CATCH \
@@ -315,8 +312,7 @@ sh_set_terminate (sh_terminate_t terminate)//@;
 //@
 //@ #define SH_FEND \
 //@       else \
-//@         { \
-//@         } \
+//@         ; \
 //@       if (_sh_thrown) \
 //@         { \
 //@           SH_THROW; \

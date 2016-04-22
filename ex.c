@@ -217,6 +217,8 @@ sh_set_terminate (sh_terminate_t terminate)//@;
   _sh_terminate = terminate;
 }
 
+// SOMEDAY: сделать SH_THROW не макросом, а просто функцией?
+
 //@
 //@ #define SH_THROW \
 //@   do \
@@ -262,7 +264,7 @@ sh_set_terminate (sh_terminate_t terminate)//@;
 //@ /// то он не скомлилируется, т. к. переменная fd не видна в SH_FINALLY. И правильно, т. к. sh_x_creat должен был быть снаружи SH_FTRY
 //@
 //@ #define SH_CTRY \
-//@   if (1) \
+//@   do \
 //@     { \
 //@       _SH_JMP_BUF *_sh_saved = _sh_buf; \
 //@       _SH_JMP_BUF _sh_this_buf; \
@@ -288,10 +290,7 @@ sh_set_terminate (sh_terminate_t terminate)//@;
 //@             } \
 //@         } \
 //@     } \
-//@   else \
-//@     do \
-//@       ; \
-//@     while (0)
+//@   while (0)
 //@
 //@ #define SH_FTRY \
 //@   do \

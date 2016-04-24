@@ -219,6 +219,7 @@ sh_set_terminate (sh_terminate_t terminate)//@;
 
 // SOMEDAY: сделать SH_THROW не макросом, а просто функцией?
 
+//@ // Правила написания SH_CTRY и тому подобных макросов. Весь блок SH_CTRY-SH_CATCH нельзя заключать в do-while, иначе break будет работать неправильно. В конце открывающего макроса нужно поставить if (1), чтобы содержимое блока SH_CTRY-SH_CATCH представляло собой в точности один оператор (statement). В начале закрывающего макроса нужно написать else с той же целью. В конце закрывающего макроса нужно поставить do-while, чтобы пользователь макроса поставил после него точку с запятой. Весь блок SH_CTRY-SH_CATCH-SH_CEND должен представлять собой один оператор (statement)
 //@
 //@ #define SH_THROW \
 //@   do \
@@ -264,7 +265,7 @@ sh_set_terminate (sh_terminate_t terminate)//@;
 //@ /// то он не скомлилируется, т. к. переменная fd не видна в SH_FINALLY. И правильно, т. к. sh_x_creat должен был быть снаружи SH_FTRY
 //@
 //@ #define SH_CTRY \
-//@   do \
+//@   if (1) \
 //@     { \
 //@       _SH_JMP_BUF *_sh_saved = _sh_buf; \
 //@       _SH_JMP_BUF _sh_this_buf; \
@@ -288,10 +289,13 @@ sh_set_terminate (sh_terminate_t terminate)//@;
 //@             ; \
 //@         } \
 //@     } \
-//@   while (0)
+//@   else \
+//@     do \
+//@       ; \
+//@     while (0)
 //@
 //@ #define SH_FTRY \
-//@   do \
+//@   if (1) \
 //@     { \
 //@       sh_bool _sh_thrown; \
 //@       SH_CTRY \
@@ -318,7 +322,10 @@ sh_set_terminate (sh_terminate_t terminate)//@;
 //@           SH_THROW; \
 //@         } \
 //@     } \
-//@   while (0)
+//@   else \
+//@     do \
+//@       ; \
+//@     while (0)
 //@
 
 //@ /// sh_get_program/sh_set_program даёт portable way to manage argv[0]

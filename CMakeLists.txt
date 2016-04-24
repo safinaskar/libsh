@@ -22,7 +22,7 @@ add_library (sh SHARED ex.c funcs.c etc.c)
 set_property (TARGET sh PROPERTY C_STANDARD 11) # Because we want noreturn. Cmake can fail back to C99 or C89
 target_link_libraries (sh ${CMAKE_DL_LIBS} -lcurl)
 
-# I have to comment this, because cmake 3.1.0 doesn't know that Visual Studio 2013 supports varadic macros
+# I have to comment this, because cmake 3.1.0 doesn't know that Visual Studio 2013 supports variadic macros
 # target_compile_features(sh PUBLIC c_variadic_macros)
 
 install (TARGETS sh DESTINATION lib)

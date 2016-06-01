@@ -1111,9 +1111,9 @@ tcp_listen_loop (const char *protocol, struct addrinfo *res)
 
       if (result != -1)
         {
-          const int on = 1;
+          const int one = 1;
 
-          if (setsockopt (result, SOL_SOCKET, SO_REUSEADDR, &on, sizeof (on)) != -1)
+          if (setsockopt (result, SOL_SOCKET, SO_REUSEADDR, &one, sizeof (one)) != -1)
             {
               if (bind (result, res->ai_addr, res->ai_addrlen) != -1)
                 {

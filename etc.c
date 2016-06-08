@@ -1421,12 +1421,25 @@ sh_force_mkdir (const char *file, mode_t mode)//@;
 #include <stdint.h> // SOMEDAY: предполагаем, что если есть clock_gettime, то есть и <stdint.h>
 #include <time.h>
 
-int64_t // SOMEDAY: правильно ли выбран тип? //@
+int64_t // SOMEDAY: правильно ли выбран тип? То же для sh_sleep_nsec //@
 sh_clock_nsec (clockid_t clock_id)//@;
 {
   struct timespec tp;
   sh_x_clock_gettime (clock_id, &tp);
   return (int64_t)tp.tv_sec * 1000000000 + (int64_t)tp.tv_nsec;
+}
+#endif //@
+
+#if defined (SH_HAVE_nanosleep) //@
+void //@
+sh_sleep_nsec (int64_t nsec)//@;
+{
+  struct timespec rqtp;
+
+  rqtp.tv_sec = nsec / 1000000000;
+  rqtp.tv_nsec = nsec % 1000000000;
+
+  sh_x_nanosleep (&rqtp);
 }
 #endif //@
 

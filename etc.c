@@ -719,6 +719,24 @@ sh_getline_fclose (FILE *stream)//@;
 }
 #endif //@
 
+#if defined (SH_HAVE_asprintf) //@
+char * //@
+sh_vasprintf (const char *fmt, va_list ap)//@;
+{
+  char *result;
+
+  sh_x_vasprintf (&result, fmt, ap);
+
+  return result;
+}
+
+char * //@
+sh_asprintf (const char *fmt, ...)//@;
+{
+  _SH_V (fmt, char *, sh_vasprintf (fmt, ap));
+}
+#endif //@
+
 #if defined (SH_HAVE_waitpid) //@
 //@ /// запускать с реальным положительным pid и без WNOHANG
 int //@
@@ -887,8 +905,8 @@ multicat_done (const struct sh_multicat_t *what)
 //@ /// Данные могут потеряться, т. е. прочитали, но не записали
 //@ /// sh_multicat делает poll только на чтение и ошибки, но не на запись. Т. е. write may block
 //@ /// sh_multicat обычно не лочится в read и поэтому сразу же чувствует ошибки write
-//@ /// sh_multicat позволяет избежать получения SIGPIPE в большинстве случаев. Но SIGPIPE всё же возможен, если пайп закрылся между poll и write
-//@ /// Мой cat круче вашего. В моём случае в "cat | prog" cat сможет сдетектить завершение prog и сразу же завершиться
+//@ /// sh_multicat позволяет избежать получения SIGPIPE в большинстве случаев. Но SIGPIPE всё же возможен, если пайп закрылся между poll и write (или SIGPIPE вообще невозможен, т. к. для SIGPIPE нужно два write? Написать в доки, что вы не сможете отдебажить SIGPIPE этой функцией. Она просто не получает его)
+//@ /// Мой cat круче вашего. В моём случае в "cat | prog" cat сможет сдетектить завершение prog и сразу же завершиться. Хорошая идея установить дополнительно этот cat
 //@ /// Инициализируйте sh_multicat_t нулями перед передачей в sh_multicat, т. к. могут быть добавлены новые поля. Инициализировать инициализатором можно, т. к. порядок полей будет неизменным
 // Не удалось доказать экспериментом, что системные вызовы Linux sendfile и splice быстрее обычного read/write
 void //@
@@ -1223,14 +1241,14 @@ progress_callback (void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off
 }
 
 void //@
-sh_curl (CURL *handle, const char *uri, FILE *fout)//@;
+sh_curl (CURL *handle, const char *url, FILE *fout)//@;
 {
   if (sh_get_err () != NULL)
     {
-      sh_x_fprintf (sh_get_err (), "Downloading %s\n", uri);
+      sh_x_fprintf (sh_get_err (), "Downloading %s\n", url);
     }
 
-  sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_URL, uri));
+  sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_URL, url));
   sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_WRITEFUNCTION, NULL));
   sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_WRITEDATA, (void *) fout));
   sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_NOPROGRESS, 0L));
@@ -1257,11 +1275,11 @@ sh_curl (CURL *handle, const char *uri, FILE *fout)//@;
 }
 
 void //@
-sh_curl_fclose (CURL *handle, const char *uri, FILE *fout)//@;
+sh_curl_fclose (CURL *handle, const char *url, FILE *fout)//@;
 {
   SH_FTRY
     {
-      sh_curl (handle, uri, fout);
+      sh_curl (handle, url, fout);
     }
   SH_FINALLY
     {

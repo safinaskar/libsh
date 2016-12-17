@@ -626,7 +626,7 @@ sys/types.h        | sys/stat.h       | int mkdirat (int fd, const char *path, m
 # DEFERRED mkdtemp, mkstemp
 # DEFERRED mkfifo, mkfifoat
 # DEFERRED mknod, mknodat
-# DEFERRED mktime
+time.h             |                  | time_t mktime (struct tm *timeptr)                                                        | (time_t)(-1) | value | # h, m
 # DEFERRED mlock, munlock
 # DEFERRED mlockall, munlockall
 # DEFERRED mmap

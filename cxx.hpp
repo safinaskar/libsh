@@ -2,7 +2,7 @@
 /// sh_init должен быть уже вызван, sh_arg_parse берёт инфу из sh_program
 /// написано на c++14, юзайте c++14 при компиляции
 /// несколько форм запуска поддерживаются
-/// вы должны явно инклудить arg.hpp
+/// вы должны явно инклудить cxx.hpp
 /// sh_arg_parse хочет std::string, а не const char *, чтоб удобнее было
 /// опции после операндов не учитываются, т. к. этого требует POSIX 2013 и это может пригодиться в программах типа chroot, в отличие от GNU getopt
 /// после --help нет \n, пишите несколько метаопций типа --version после --help, потом \n, а потом остальные опции. сами ставьте \n после тех хелпов, после которых нужно
@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 
 #include "ex.h"
@@ -358,5 +359,30 @@ sh_arg_end (char *const *argv)
       sh_throwx ("extra operand: %s\nTry \"%s --help\" for more information.", argv[0], sh_get_program ());
     }
 }
+
+#if defined (SH_HAVE_asprintf)
+static std::string
+sh_s_vasprintf (const char *fmt, va_list ap)
+{
+  char *buffer = sh_vasprintf (fmt, ap);
+
+  std::string result = buffer;
+
+  free (buffer);
+
+  return result;
+}
+
+static std::string
+sh_s_asprintf (const char *fmt, ...)
+{
+  va_list ap;
+  va_start (ap, fmt);
+  std::string result = sh_s_vasprintf (fmt, ap);
+  va_end (ap);
+
+  return result;
+}
+#endif
 
 #endif // ! _SH_ARG_HPP

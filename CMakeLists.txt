@@ -26,5 +26,5 @@ target_link_libraries (sh ${CMAKE_DL_LIBS} -lcurl)
 # target_compile_features(sh PUBLIC c_variadic_macros)
 
 install (TARGETS sh DESTINATION lib)
-install (FILES "${PROJECT_BINARY_DIR}/ex.h" "${PROJECT_BINARY_DIR}/funcs.h" etc.h arg.hpp DESTINATION include/libsh)
+install (FILES "${PROJECT_BINARY_DIR}/ex.h" "${PROJECT_BINARY_DIR}/funcs.h" etc.h cxx.hpp DESTINATION include/libsh)
 install (FILES libsh.h DESTINATION include)

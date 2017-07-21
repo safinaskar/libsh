@@ -1,0 +1,8 @@
+PACKAGE='safinaskar/libsh'
+ARCH='any'
+DEPENDS=''
+BUILD_DEPENDS='prog:cmake:cmake prog:make:make prog:cc:gcc prog:bash:bash prog:grep:grep prog:sed:sed prog:diff:diffutils'
+LIBS='libc:6 libstdc++:6:libstdc++-6-dev libcurl:3'
+INSTALL='[ -e CMakeCache.txt ] && echo "Failed: CMakeCache.txt" && exit 1;'\
+'./dev.mk &&'\
+'rm -rf tpm-build && mkdir tpm-build && cd tpm-build && cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" .. && make install && cd ..; rm -rf tpm-build'

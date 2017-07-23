@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.1) # 3.1 adds C_STANDARD, target_compile_features
-project (libsh C)
+project (libsh LANGUAGES C)
 
 include (${CMAKE_ROOT}/Modules/CheckSymbolExists.cmake)
 

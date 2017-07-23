@@ -5,4 +5,4 @@ BUILD_DEPENDS='prog:cmake:cmake prog:make:make prog:cc:gcc prog:bash:bash prog:g
 LIBS=''
 INSTALL='[ -e CMakeCache.txt ] && echo "Failed: CMakeCache.txt" && exit 1;'\
 './dev.mk &&'\
-'rm -rf tpm-build && mkdir tpm-build && cd tpm-build && cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" .. && make install && cd ..; rm -rf tpm-build'
+'cd "$BUILD" && cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" "$SRC" && make install'

@@ -391,7 +391,7 @@ sh_set_err (FILE *err)//@;
 //@ /// }
 
 void //@
-sh_vwarnx (const char *format, va_list ap)//@;
+sh_default_vwarnx (const char *format, va_list ap)//@;
 {
   if (sh_get_out () != NULL)
     {
@@ -418,7 +418,7 @@ sh_vwarnx (const char *format, va_list ap)//@;
 }
 
 void //@
-sh_vwarn (const char *format, va_list ap)//@;
+sh_default_vwarn (const char *format, va_list ap)//@;
 {
   int saved_errno = errno;
 
@@ -441,6 +441,47 @@ sh_vwarn (const char *format, va_list ap)//@;
       fprintf (sh_get_err (), "%s\n", strerror (saved_errno));
       fflush (sh_get_err ());
     }
+}
+
+//@ typedef void (*sh_vwarn_t) (const char *format, va_list ap);
+
+sh_vwarn_t _sh_vwarnx = &sh_default_vwarnx;
+sh_vwarn_t _sh_vwarn = &sh_default_vwarn;
+
+sh_vwarn_t //@
+sh_get_vwarnx (void)//@;
+{
+  return _sh_vwarnx;
+}
+
+sh_vwarn_t //@
+sh_get_vwarn (void)//@;
+{
+  return _sh_vwarn;
+}
+
+void //@
+sh_set_vwarnx (sh_vwarn_t f)//@;
+{
+  _sh_vwarnx = f;
+}
+
+void //@
+sh_set_vwarn (sh_vwarn_t f)//@;
+{
+  _sh_vwarn = f;
+}
+
+void //@
+sh_vwarnx (const char *format, va_list ap)//@;
+{
+  (&_sh_vwarnx) (format, ap);
+}
+
+void //@
+sh_vwarn (const char *format, va_list ap)//@;
+{
+  (&_sh_vwarn) (format, ap);
 }
 
 SH_NORETURN void //@

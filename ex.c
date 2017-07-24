@@ -475,13 +475,13 @@ sh_set_vwarn (sh_vwarn_t f)//@;
 void //@
 sh_vwarnx (const char *format, va_list ap)//@;
 {
-  (&_sh_vwarnx) (format, ap);
+  (*_sh_vwarnx) (format, ap);
 }
 
 void //@
 sh_vwarn (const char *format, va_list ap)//@;
 {
-  (&_sh_vwarn) (format, ap);
+  (*_sh_vwarn) (format, ap);
 }
 
 SH_NORETURN void //@

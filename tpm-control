@@ -1,6 +1,6 @@
 PACKAGE='safinaskar/libsh'
 ARCH='any'
-DEPENDS='libdev:libc:6 libdev:libcurl:3 libdev:libstdc++:6:libstdc++-6-dev'
+DEPENDS='libdev:libc:6 libdev:libcurl:3 libdev:libstdc++:6:g++'
 BUILD_DEPENDS='prog:cmake:cmake prog:make:make prog:cc:gcc prog:bash:bash prog:grep:grep prog:sed:sed prog:diff:diffutils'
 LIBS=''
 INSTALL='[ -e CMakeCache.txt ] && echo "Failed: CMakeCache.txt" && exit 1;'\

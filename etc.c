@@ -288,7 +288,8 @@ _sh_after_fcntl (int result)//@;
 void * //@
 sh_xx_memchr (const void *s, int c, size_t n)//@;
 {
-  void *result = memchr (s, c, n);
+  // Конвертируем в void *, чтобы иметь возможность когда-нибудь сконвертировать этот код в C++
+  void *result = (void *)memchr (s, c, n);
 
   if (result == NULL)
     {
@@ -302,7 +303,8 @@ sh_xx_memchr (const void *s, int c, size_t n)//@;
 char * //@
 sh_xx_strchr (const char *s, int c)//@;
 {
-  char *result = strchr (s, c);
+  // Конвертируем в char *, чтобы иметь возможность когда-нибудь сконвертировать этот код в C++
+  char *result = (char *)strchr (s, c);
 
   if (result == NULL)
     {
@@ -316,7 +318,8 @@ sh_xx_strchr (const char *s, int c)//@;
 char * //@
 sh_xx_strstr (const char *s1 /* haystack */, const char *s2 /* needle */)//@;
 {
-  char *result = strstr (s1, s2);
+  // Конвертируем в char *, чтобы иметь возможность когда-нибудь сконвертировать этот код в C++
+  char *result = (char *)strstr (s1, s2);
 
   if (result == NULL)
     {
@@ -331,7 +334,8 @@ sh_xx_strstr (const char *s1 /* haystack */, const char *s2 /* needle */)//@;
 char * //@
 sh_xx_strcasestr (const char *haystack, const char *needle)//@;
 {
-  char *result = strcasestr (haystack, needle);
+  // Конвертируем в char *, чтобы иметь возможность когда-нибудь сконвертировать этот код в C++
+  char *result = (char *)strcasestr (haystack, needle);
 
   if (result == NULL)
     {
@@ -1311,7 +1315,7 @@ pid_t //@
 sh_fork_redirs (const struct sh_redir redirs[], struct sh_pipe pipes[])//@;
 {
   struct sh_redir no_redirs[] = {{-1}};
-  struct sh_pipe no_pipes[] = {{0}};
+  struct sh_pipe no_pipes[] = {{sh_to_child}};
 
   if (redirs == NULL)
     {

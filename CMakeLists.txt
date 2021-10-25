@@ -6,7 +6,7 @@ include (${CMAKE_ROOT}/Modules/CheckSymbolExists.cmake)
 set (CMAKE_REQUIRED_LIBRARIES ${CMAKE_DL_LIBS} -lcurl)
 
 # _POSIX_C_SOURCE, because I want to get all POSIX functions
-# _GNU_SOURCE, т. к. я хочу получить strcasestr, splice и другие функции
+# _GNU_SOURCE, т. к. я хочу получить splice и другие функции
 set (CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1")
 
 check_symbol_exists (sigsetjmp "setjmp.h" SH_HAVE_sigsetjmp)

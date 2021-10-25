@@ -17,7 +17,7 @@
 // Чтобы быть уверенным, что, например, stdio.h объявит ssize_t, нужный для sh_getdelim_no_delim
 #define _POSIX_C_SOURCE 200809L
 
-// Для strcasestr
+// Это было для strcasestr. Теперь, может, и не надо
 #define _GNU_SOURCE 1
 
 #include <errno.h>
@@ -283,22 +283,7 @@ _sh_after_fcntl (int result)//@;
 
 //@ /// ---- xx without x ----
 
-#include <string.h>
-//@ /// x_memchr нет, есть HAVE, то же для strchr, strstr, strcasestr
-void * //@
-sh_xx_memchr (const void *s, int c, size_t n)//@;
-{
-  // Конвертируем в void *, чтобы иметь возможность когда-нибудь сконвертировать этот код в C++
-  void *result = (void *)memchr (s, c, n);
-
-  if (result == NULL)
-    {
-      sh_throwx ("memchr: byte not found");
-    }
-
-  return result;
-}
-
+//@ /// x_strchr нет, есть HAVE
 #include <string.h>
 char * //@
 sh_xx_strchr (const char *s, int c)//@;
@@ -313,38 +298,6 @@ sh_xx_strchr (const char *s, int c)//@;
 
   return result;
 }
-
-#include <string.h>
-char * //@
-sh_xx_strstr (const char *s1 /* haystack */, const char *s2 /* needle */)//@;
-{
-  // Конвертируем в char *, чтобы иметь возможность когда-нибудь сконвертировать этот код в C++
-  char *result = (char *)strstr (s1, s2);
-
-  if (result == NULL)
-    {
-      sh_throwx ("strstr: substring not found");
-    }
-
-  return result;
-}
-
-#if defined (SH_HAVE_strcasestr)
-#include <string.h>
-char * //@
-sh_xx_strcasestr (const char *haystack, const char *needle)//@;
-{
-  // Конвертируем в char *, чтобы иметь возможность когда-нибудь сконвертировать этот код в C++
-  char *result = (char *)strcasestr (haystack, needle);
-
-  if (result == NULL)
-    {
-      sh_throwx ("strcasestr: substring not found");
-    }
-
-  return result;
-}
-#endif
 
 //@ /// ---- xx ----
 

@@ -140,7 +140,7 @@ stddef.h           | stdlib.h         | void *calloc (size_t nelem, size_t elsiz
                    | unistd.h         | int chdir (const char *path)                                                              | -1     | void  | "%s", path # h, m
 sys/types.h        | sys/stat.h       | int chmod (const char *path, mode_t mode)                                                 | -1     | void  | "%s", path # h, m
 sys/types.h        | sys/stat.h       | int fchmodat (int fd, const char *path, mode_t mode, int flag)                            | -1     | void  | "%s", path # h, m
-sys/types.h        | unistd.h         | int chown (const char *path, uid_t owner, gid_t group)                                    | -1     | void  | "%s", path # h, m
+# DEFERRED chown
 sys/types.h        | unistd.h         | int fchownat (int fd, const char *path, uid_t owner, gid_t group, int flag)               | -1     | void  | "%s", path # h, m
                    | unistd.h         | int chroot (const char *path)                                                             | -1     | void  | "%s", path # h, m, docs: not in POSIX, info taken from Linux man-pages
 # FLOAT cimag, cimagf, cimagl
@@ -616,7 +616,7 @@ stddef.h           | stdlib.h         | void *malloc (size_t size)              
 # DEFERRED mbstowcs
 # DEFERRED mbtowc
 # DEFERRED memccpy
-stddef.h           | string.h         | void *memchr (const void *s, int c, size_t n)                                             | external | external | external # h, m
+# DEFERRED memchr
 # SUCCESS memcmp
 # SUCCESS memcpy
 # SUCCESS memmove
@@ -893,8 +893,7 @@ signal.h           |                  | int sigfillset (sigset_t *set)          
 fcntl.h, sys/types.h |                | ssize_t splice (int fd_in, loff_t *off_in, int fd_out, loff_t *off_out, size_t len, unsigned int flags) | -1 | value | # h, m, docs: not in POSIX, info taken from Linux man-pages, splice and sendfile man pages have issues: bugzilla.kernel.org/show_bug.cgi?id=86001 , https://bugzilla.kernel.org/show_bug.cgi?id=90911 (баги исправлены, но исправления пока могли не дойти до дистрибутивов)
 # FLOAT sqrt, sqrtf, sqrtl
 # VAR stderr, stdin, stdout
-# DEFERRED strcasecmp, strcasecmp_l, strncasecmp, strncasecmp_l
-                   | string.h         | char *strcasestr (const char *haystack, const char *needle)                               | external | external | external # h, m, docs: not in POSIX, info taken from Linux man-pages
+# DEFERRED strcasecmp, strcasecmp_l, strcasestr, strncasecmp, strncasecmp_l
 # SUCCESS strcat
                    | string.h         | char *strchr (const char *s, int c)                                                       | external | external | external # h, m
 # SUCCESS strcmp
@@ -948,7 +947,7 @@ stddef.h           | string.h         | char *strndup (const char *s, size_t siz
   return result;
 }
 # SUCCESS strspn
-                   | string.h         | char *strstr(const char *s1, const char *s2)                                               | external | external | external # h, m
+# DEFERRED strstr
                    | stdlib.h, errno.h | double strtod (const char *SH_RESTRICT nptr, char **SH_RESTRICT endptr)                   | custom | value | custom # h, m
 {
   _SH_STRTO (double, strtod, (nptr, endptr));

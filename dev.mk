@@ -1,5 +1,7 @@
 #!/usr/bin/make -f
 
+$(if $(filter grouped-target,$(.FEATURES)),,$(error GNU Make 4.3+ required))
+
 SHELL = /bin/bash # Because of pipefail
 
 GEN_HEADER = grep '//@' $^ | sed 's~ *//@\( \|\)~~' > $@ || { rm -f $@; exit 1; }
@@ -18,5 +20,5 @@ ex.h.in: ex.c
 etc.h: etc.c
 	$(GEN_HEADER)
 
-funcs.h.in funcs.c funcs.cmake: gen-funcs.sh funcs.in
+funcs.h.in funcs.c funcs.cmake &: gen-funcs.sh funcs.in
 	./gen-funcs.sh funcs.h.in funcs.c funcs.cmake < funcs.in || { rm -f funcs.h.in funcs.c funcs.cmake; exit 1; }

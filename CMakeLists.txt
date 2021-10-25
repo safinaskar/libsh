@@ -3,7 +3,7 @@ project (libsh LANGUAGES C)
 
 include (${CMAKE_ROOT}/Modules/CheckSymbolExists.cmake)
 
-set (CMAKE_REQUIRED_LIBRARIES ${CMAKE_DL_LIBS} -lcurl)
+set (CMAKE_REQUIRED_LIBRARIES -lcurl)
 
 # _POSIX_C_SOURCE, because I want to get all POSIX functions
 # _GNU_SOURCE, т. к. я хочу получить splice и другие функции
@@ -20,7 +20,7 @@ include_directories ("${PROJECT_BINARY_DIR}")
 
 add_library (sh SHARED ex.c funcs.c etc.c)
 set_property (TARGET sh PROPERTY C_STANDARD 11) # Because we want noreturn. Cmake can fail back to C99 or C89
-target_link_libraries (sh ${CMAKE_DL_LIBS} -lcurl)
+target_link_libraries (sh -lcurl)
 
 # I have to comment this, because cmake 3.1.0 doesn't know that Visual Studio 2013 supports variadic macros
 # target_compile_features(sh PUBLIC c_variadic_macros)

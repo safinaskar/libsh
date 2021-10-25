@@ -198,36 +198,6 @@ curl/curl.h        |                  | CURL *curl_easy_init (void)             
 # DEFERRED dirfd
 # DEFERRED dirname
 # DEFERRED div
-                   | dlfcn.h          | int dlclose (void *handle)                                                                | custom | void  | custom # h, m, docs: dlerror, а значит и x_dlclose, x_dlopen, x_dlsym могут быть thread-unsafe
-{
-  if (dlclose (handle) != 0)
-    {
-      sh_throwx ("dlclose: %s", dlerror ());
-    }
-}
-# SUCCESS dlerror
-dlfcn.h            |                  | void *dlopen (const char *file, int mode)                                                 | custom | value | custom # h, m
-{
-  void *result = dlopen (file, mode);
-
-  if (result == NULL)
-    {
-      sh_throwx ("dlopen: %s: %s", file, dlerror ());
-    }
-
-  return result;
-}
-                   | dlfcn.h          | void *dlsym (void *SH_RESTRICT handle, const char *SH_RESTRICT name)                      | custom | value | custom # h, m
-{
-  void *result = dlsym (handle, name);
-
-  if (result == NULL)
-    {
-      sh_throwx ("dlsym: %s: %s", name, dlerror ());
-    }
-
-  return result;
-}
 # DEFERRED drand48, erand48, jrand48, lcong48, lrand48, mrand48, nrand48, seed48, srand48
                    | unistd.h         | int dup (int fildes)                                                                      | -1     | value | # h, m
                    | unistd.h         | int dup2 (int fildes, int fildes2)                                                        | -1     | value | # h, m

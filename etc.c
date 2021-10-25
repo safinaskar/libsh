@@ -1174,78 +1174,6 @@ sh_curl_wrapper (CURLcode errornum)//@;
     }
 }
 
-#if defined (SH_HAVE_isatty) && defined (SH_HAVE_fileno) //@
-#include <unistd.h>
-
-static int
-progress_callback (void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
-{
-  if (sh_get_err () != NULL && isatty (sh_x_fileno (sh_get_err ())))
-    {
-      if (dltotal == 0)
-        {
-          sh_x_fprintf (sh_get_err (), "\b\b\b\b    \b\b\b\b?%%");
-        }
-      else
-        {
-          sh_x_fprintf (sh_get_err (), "\b\b\b\b    \b\b\b\b%d%%", (int) (dlnow * 100. / dltotal));
-        }
-
-      sh_x_fflush (sh_get_err ());
-    }
-
-  return 0;
-}
-
-void //@
-sh_curl (CURL *handle, const char *url, FILE *fout)//@;
-{
-  if (sh_get_err () != NULL)
-    {
-      sh_x_fprintf (sh_get_err (), "Downloading %s\n", url);
-    }
-
-  sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_URL, url));
-  sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_WRITEFUNCTION, NULL));
-  sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_WRITEDATA, (void *) fout));
-  sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_NOPROGRESS, 0L));
-  sh_curl_wrapper (curl_easy_setopt (handle, CURLOPT_XFERINFOFUNCTION, &progress_callback));
-
-  sh_curl_wrapper (curl_easy_perform (handle));
-
-  if (sh_get_err () != NULL && isatty (sh_x_fileno (sh_get_err ())))
-    {
-      sh_x_fprintf (sh_get_err (), "\b\b\b\b    \b\b\b\b");
-      sh_x_fflush (sh_get_err ());
-    }
-
-  {
-    long response_code;
-
-    sh_curl_wrapper (curl_easy_getinfo (handle, CURLINFO_RESPONSE_CODE, &response_code));
-
-    if (response_code != 200)
-      {
-        sh_throwx ("sh_curl: response code is %ld (200 expected)", response_code);
-      }
-  }
-}
-
-void //@
-sh_curl_fclose (CURL *handle, const char *url, FILE *fout)//@;
-{
-  SH_FTRY
-    {
-      sh_curl (handle, url, fout);
-    }
-  SH_FINALLY
-    {
-      sh_x_fclose (fout);
-    }
-  SH_FEND;
-}
-#endif //@
-
 #if defined (SH_HAVE_pipe) && defined (SH_HAVE_fork) && defined (SH_HAVE_dup2) && defined (SH_HAVE_close) //@
 //@ struct sh_redir
 //@ {
@@ -1338,19 +1266,6 @@ sh_fork_redirs (const struct sh_redir redirs[], struct sh_pipe pipes[])//@;
 
 #if defined (SH_HAVE_pipe) && defined (SH_HAVE_fork) && defined (SH_HAVE_dup2) && defined (SH_HAVE_close) && defined (SH_HAVE_execve) && defined (SH_HAVE_execvp) //@
 pid_t //@
-sh_spawnve (struct sh_redir redirs[], struct sh_pipe pipes[], const char *path, char *const argv[], char *const envp[])//@;
-{
-  pid_t result = sh_fork_redirs (redirs, pipes);
-
-  if (result == 0)
-    {
-      sh_x_execve (path, argv, envp);
-    }
-
-  return result;
-}
-
-pid_t //@
 sh_spawnvp (struct sh_redir redirs[], struct sh_pipe pipes[], const char *command, char *const argv[])//@;
 {
   pid_t result = sh_fork_redirs (redirs, pipes);
@@ -1361,34 +1276,6 @@ sh_spawnvp (struct sh_redir redirs[], struct sh_pipe pipes[], const char *comman
     }
 
   return result;
-}
-#endif //@
-
-#if defined (SH_HAVE_stat) //@
-#include <sys/stat.h>
-
-sh_bool //@
-sh_test_d (const char *file)//@;
-{
-  struct stat buf;
-
-  if (stat (file, &buf) == -1)
-    {
-      return sh_false;
-    }
-
-  return buf.st_mode & S_IFDIR;
-}
-#endif //@
-
-#if defined (SH_HAVE_stat) && defined (SH_HAVE_mkdir) //@
-void //@
-sh_force_mkdir (const char *file, mode_t mode)//@;
-{
-  if (!sh_test_d (file))
-    {
-      sh_x_mkdir (file, mode);
-    }
 }
 #endif //@
 

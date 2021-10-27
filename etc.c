@@ -462,7 +462,7 @@ sh_xx_strtoull (const char *str, int base)//@;
   return x
 
 #include <limits.h>
-#include <stdint.h>
+//@ #include <stdint.h>
 
 int //@
 sh_long2int (long x)//@;
